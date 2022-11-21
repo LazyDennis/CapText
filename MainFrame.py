@@ -1,14 +1,15 @@
 import wx
 from GrabFrame import GrabFrame
+from aip import AipOcr
         
 class Mainframe(wx.Frame):
     __main_sizer : wx.BoxSizer
     __capture_panel : wx.Panel
-    __tranres_panel : wx.Panel
+    __text_panel : wx.Panel
     __capture_button : wx.Button
     __grab_frame : GrabFrame
     __capture_bitmap : wx.StaticBitmap
-    __tran_text : wx.TextCtrl
+    __result_text : wx.TextCtrl
     __result_bitmap : wx.Bitmap
     
     def __init__(self, title):
@@ -52,13 +53,13 @@ class Mainframe(wx.Frame):
     
     def __InitTranResPanel(self) -> wx.BoxSizer:
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.__tranres_panel = wx.Panel(self, wx.ID_ANY, style=wx.TAB_TRAVERSAL | wx.NO_BORDER)
+        self.__text_panel = wx.Panel(self, wx.ID_ANY, style=wx.TAB_TRAVERSAL | wx.NO_BORDER)
         panel_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.__tran_text = wx.TextCtrl(self.__tranres_panel, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_LEFT)
-        panel_sizer.Add(self.__tran_text, 1, wx.EXPAND)
-        self.__tranres_panel.SetSizer(panel_sizer)
+        self.__result_text = wx.TextCtrl(self.__text_panel, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_LEFT)
+        panel_sizer.Add(self.__result_text, 1, wx.EXPAND)
+        self.__text_panel.SetSizer(panel_sizer)
         
-        sizer.Add(self.__tranres_panel, 1, wx.EXPAND)        
+        sizer.Add(self.__text_panel, 1, wx.EXPAND)        
         
         return sizer
     
@@ -73,6 +74,7 @@ class Mainframe(wx.Frame):
         self.Hide()
         while not self.IsShownOnScreen():
             # self.grab_bitmap = self.__GetScreenBmp()
+            wx.Sleep(1)
             screen_bitmap = self.__GetScreenBmp()
             self.__grab_frame: GrabFrame = GrabFrame(self, screen_bitmap)
             break
@@ -94,13 +96,33 @@ class Mainframe(wx.Frame):
         self.__capture_bitmap.SetBitmap(_grab_bitmap)
         self.__capture_panel.Layout()
         self.__capture_panel.Refresh()
+        wx.Sleep(1)
         self.__TextReconize(_grab_bitmap)
         return
     
     def __TextReconize(self, _grab_bitmap : wx.Bitmap):
-        
+        _grab_bitmap.SaveFile('temp.jpg', wx.BITMAP_TYPE_JPEG)
+        api_config = ReadConfig()
+        print('got config')
+        client = AipOcr(api_config['APP_ID'], api_config['API_KEY'], 
+                        api_config['SECRET_KEY'])
+        options = {'language_type' : 'CHN_ENG', 'paragraph' : True}
+        with open('temp.jpg', 'rb') as fp:
+            result = client.basicGeneral(fp.read(), options)
+            print(result)
+            text = ''
+            for res in result['words_result']:
+                text += res['words']
+                text += '\n'
+            self.__result_text.SetValue(text)
         return
 
+
+def ReadConfig():
+    import json
+    with open('ApiSetting.conf', 'r') as fp:
+        api_conf = json.loads(fp.read())
+        return api_conf
 
 
 import win32gui, win32ui, win32con, win32api
