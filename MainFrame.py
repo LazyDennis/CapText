@@ -1,7 +1,9 @@
 import wx
 from GrabFrame import GrabFrame
 from aip import AipOcr
-        
+from api import APP_ID, API_KEY, SECRET_KEY
+from io import BytesIO
+
 class Mainframe(wx.Frame):
     __main_sizer : wx.BoxSizer
     __capture_panel : wx.Panel
@@ -32,6 +34,7 @@ class Mainframe(wx.Frame):
         upper_sizer.Add(self.__InitTranResPanel(), 1, wx.EXPAND)
         
         downer_sizer.Add(self.__InitCaptureButton(), 0, wx.ALIGN_LEFT | wx.ALL, 10)
+        # downer_sizer.Add(self.__InitReconizeButton(), 0, wx.ALIGN_LEFT | wx.ALL, 10)
         
         self.__main_sizer.Add(upper_sizer, 1, wx.EXPAND)
         self.__main_sizer.Add(downer_sizer, 0, wx.EXPAND)
@@ -70,15 +73,22 @@ class Mainframe(wx.Frame):
         self.__capture_button.Bind(wx.EVT_BUTTON, self.__OnClick)
         return sizer
 
+    def __InitReconizeButton(self) -> wx.BoxSizer:
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.__reconize_button = wx.Button(self, wx.ID_ANY, u'识别')
+        sizer.Add(self.__reconize_button, 0, wx.EXPAND)
+        self.__reconize_button.Bind(wx.EVT_BUTTON, self.__OnReconize)
+        return sizer
+
     def __OnClick(self, evt):
         self.Hide()
         while not self.IsShownOnScreen():
             # self.grab_bitmap = self.__GetScreenBmp()
-            wx.Sleep(1)
+            # wx.Sleep(1)
+            wx.MilliSleep(200)
             screen_bitmap = self.__GetScreenBmp()
             self.__grab_frame: GrabFrame = GrabFrame(self, screen_bitmap)
             break
-        
 
     def __GetScreenBmp(self):
         s: wx.Size = wx.GetDisplaySize()
@@ -96,33 +106,28 @@ class Mainframe(wx.Frame):
         self.__capture_bitmap.SetBitmap(_grab_bitmap)
         self.__capture_panel.Layout()
         self.__capture_panel.Refresh()
-        wx.Sleep(1)
+        # wx.Sleep(0.5)
         self.__TextReconize(_grab_bitmap)
+        # self.__result_bitmap = _grab_bitmap
         return
+
+    def __OnReconize(self, evt):
+        self.__TextReconize(self.__result_bitmap)
     
     def __TextReconize(self, _grab_bitmap : wx.Bitmap):
-        _grab_bitmap.SaveFile('temp.jpg', wx.BITMAP_TYPE_JPEG)
-        api_config = ReadConfig()
-        print('got config')
-        client = AipOcr(api_config['APP_ID'], api_config['API_KEY'], 
-                        api_config['SECRET_KEY'])
+        temp_img = BytesIO()
+        image : wx.Image = _grab_bitmap.ConvertToImage()
+        image.SaveFile(temp_img, wx.BITMAP_TYPE_JPEG)
+        client = AipOcr(APP_ID, API_KEY, SECRET_KEY)
         options = {'language_type' : 'CHN_ENG', 'paragraph' : True}
-        with open('temp.jpg', 'rb') as fp:
-            result = client.basicGeneral(fp.read(), options)
-            print(result)
-            text = ''
-            for res in result['words_result']:
-                text += res['words']
-                text += '\n'
-            self.__result_text.SetValue(text)
+        result = client.basicGeneral(temp_img.getvalue(), options)
+        print(result)
+        text = ''
+        for res in result['words_result']:
+            text += res['words']
+            text += '\n'
+        self.__result_text.SetValue(text)
         return
-
-
-def ReadConfig():
-    import json
-    with open('ApiSetting.conf', 'r') as fp:
-        api_conf = json.loads(fp.read())
-        return api_conf
 
 
 import win32gui, win32ui, win32con, win32api
