@@ -19,7 +19,8 @@ MENUS = [
                     'helpString': u'新建截图',
                     'kind': wx.ITEM_NORMAL
                 },
-                'icon': u'创建_newlybuild.png'
+                'icon': u'创建_newlybuild.png',
+                'handler': '__OnNew'
             },
             {
                 'property':
@@ -29,7 +30,8 @@ MENUS = [
                     'helpString': u'打开已有图片',
                     'kind': wx.ITEM_NORMAL
                 },
-                'icon': u'图片文件_image-files.png'
+                'icon': u'图片文件_image-files.png',
+                'handler': '__OnOpenImage'
             },
             {
                 'property':
@@ -39,7 +41,8 @@ MENUS = [
                     'helpString': u'保存当前截图',
                     'kind': wx.ITEM_NORMAL
                 },
-                'icon': u'图片下载_down-picture.png'
+                'icon': u'图片下载_down-picture.png',
+                'handler': '__OnSaveCapture'
             },
             {
                 'property':
@@ -49,7 +52,8 @@ MENUS = [
                     'helpString': u'保存识别文本',
                     'kind': wx.ITEM_NORMAL
                 },
-                'icon': u'文本文件_file-text.png'
+                'icon': u'文本文件_file-text.png',
+                'handler': '__OnSaveText'
             },
             {
                 'property':
@@ -61,11 +65,12 @@ MENUS = [
                 'property':
                 {
                     'id': 199,
-                    'text': u'退出(&X)\tATL+F4',
+                    'text': u'退出(&X)\tCTRL+&X',
                     'helpString': u'退出程序',
                     'kind': wx.ITEM_NORMAL
                 },
-                'icon': u'退出_logout.png'
+                'icon': u'退出_logout.png',
+                'handler': '__OnExit'
             }
         ]
     },
@@ -81,7 +86,8 @@ MENUS = [
                     'helpString': u'获取截图',
                     'kind': wx.ITEM_NORMAL
                 },
-                'icon': u'设置_setting-two.png'
+                'icon': u'截图_screenshot-one.png',
+                'handler': '__OnCapture'
             },
             {
                 'property':
@@ -91,7 +97,8 @@ MENUS = [
                     'helpString': u'识别当前截图',
                     'kind': wx.ITEM_NORMAL
                 },
-                'icon': u'文字识别_text-recognition.png'
+                'icon': u'文字识别_text-recognition.png',
+                'handler': '__OnRecognize'
             },
             {
                 'property':
@@ -107,7 +114,8 @@ MENUS = [
                     'helpString': u'变更设定',
                     'kind': wx.ITEM_NORMAL
                 },
-                'icon': u'设置_setting-two.png'
+                'icon': u'设置_setting-two.png',
+                'handler': '__OnSetting'
             }
         ]
     },
@@ -119,11 +127,12 @@ MENUS = [
                 'property':
                 {
                     'id': 300,
-                    'text': u'帮助(&H)\tF1',
+                    'text': u'帮助(&H)\tCTRL+&H',
                     'helpString': u'获取帮助',
                     'kind': wx.ITEM_NORMAL
                 },
-                'icon': u'帮助_help.png'
+                'icon': u'帮助_help.png',
+                'handler': '__OnHelp'
             },
             {
                 'property':
@@ -133,7 +142,8 @@ MENUS = [
                     'helpString': u'关于',
                     'kind': wx.ITEM_NORMAL
                 },
-                'icon': u''
+                'icon': u'信息_info.png',
+                'handler': '__OnAbout'
             }
         ]
     }
