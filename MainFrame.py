@@ -3,6 +3,9 @@ from GrabFrame import GrabFrame
 from aip import AipOcr
 from api import APP_ID, API_KEY, SECRET_KEY
 from io import BytesIO
+import Util
+
+import GlobalVars
 
 class Mainframe(wx.Frame):
     __main_sizer : wx.BoxSizer
@@ -26,12 +29,13 @@ class Mainframe(wx.Frame):
         self.__result_bitmap: wx.Bitmap = None
         
     def __InitUi(self):
+        self.__InitMenu()
         self.__main_sizer = wx.BoxSizer(wx.VERTICAL)
         upper_sizer = wx.BoxSizer(wx.HORIZONTAL)
         downer_sizer = wx.BoxSizer(wx.VERTICAL)
         
         upper_sizer.Add(self.__InitCapturePanel(), 1, wx.EXPAND)
-        upper_sizer.Add(self.__InitTranResPanel(), 1, wx.EXPAND)
+        upper_sizer.Add(self.__InitReconizeResPanel(), 1, wx.EXPAND)
         
         downer_sizer.Add(self.__InitCaptureButton(), 0, wx.ALIGN_LEFT | wx.ALL, 10)
         # downer_sizer.Add(self.__InitReconizeButton(), 0, wx.ALIGN_LEFT | wx.ALL, 10)
@@ -40,6 +44,28 @@ class Mainframe(wx.Frame):
         self.__main_sizer.Add(downer_sizer, 0, wx.EXPAND)
         
         self.SetSizer(self.__main_sizer)
+
+        self.CreateStatusBar()
+
+    def __InitMenu(self):
+        import os
+        self.menu_bar = wx.MenuBar()
+
+        for menu_info in GlobalVars.MENUS:
+            menu = wx.Menu()
+            for item in menu_info['menu_items']:
+                menu_item = wx.MenuItem(**item['property'])
+                if 'icon' in item and item['icon']:
+                    icon_path = GlobalVars.ICON_PATH + item['icon']
+                    if os.path.exists(icon_path):
+                        menu_item.SetBitmap(
+                            Util.GetIcon(
+                                icon_path, GlobalVars.ICON_SETTING['menu_icon']))
+                menu.Append(menu_item)
+            self.menu_bar.Append(menu, menu_info['title'])
+        
+        self.SetMenuBar(self.menu_bar)
+        return
         
     def __InitCapturePanel(self) -> wx.BoxSizer:
         sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -54,11 +80,11 @@ class Mainframe(wx.Frame):
         
         return sizer
     
-    def __InitTranResPanel(self) -> wx.BoxSizer:
+    def __InitReconizeResPanel(self) -> wx.BoxSizer:
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.__text_panel = wx.Panel(self, wx.ID_ANY, style=wx.TAB_TRAVERSAL | wx.NO_BORDER)
         panel_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.__result_text = wx.TextCtrl(self.__text_panel, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_LEFT)
+        self.__result_text = wx.TextCtrl(self.__text_panel, style=wx.TE_MULTILINE | wx.TE_LEFT)
         panel_sizer.Add(self.__result_text, 1, wx.EXPAND)
         self.__text_panel.SetSizer(panel_sizer)
         
@@ -128,22 +154,4 @@ class Mainframe(wx.Frame):
             text += '\n'
         self.__result_text.SetValue(text)
         return
-
-
-import win32gui, win32ui, win32con, win32api
-def window_capture(filename, start_point : tuple, size : tuple):
-    hwnd = 0                                                        # 窗口的编号，0号表示当前活跃窗口
-    hwndDC = win32gui.GetWindowDC(hwnd)                                    # 根据窗口句柄获取窗口的设备上下文DC（Device Context）
-    mfcDC = win32ui.CreateDCFromHandle(hwndDC)                           # 根据窗口的DC获取mfcDC
-    saveDC = mfcDC.CreateCompatibleDC()                                  # mfcDC创建可兼容的DC
-    saveBitMap = win32ui.CreateBitmap()                              # 创建bitmap准备保存图片
-    MoniterDev = win32api.EnumDisplayMonitors(None, None)                  # 获取监控器信息
-    w = MoniterDev[0][2][2]
-    h = MoniterDev[0][2][3]
-    # print(w,h)　　　#图片大小
-    saveBitMap.CreateCompatibleBitmap(mfcDC, size[0], size[1])                              # 为bitmap开辟空间
-    saveDC.SelectObject(saveBitMap)                                             # 高度saveDC，将截图保存到saveBitmap中
-    saveDC.BitBlt((0, 0), size, mfcDC, start_point, win32con.SRCCOPY)              # 截取从左上角（0，0）长宽为（w，h）的图片
-    
-    saveBitMap.SaveBitmapFile(saveDC, filename)
 
