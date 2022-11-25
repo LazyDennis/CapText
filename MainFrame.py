@@ -9,18 +9,14 @@ import GlobalVars
 
 
 class Mainframe(wx.Frame):
-    __main_sizer: wx.BoxSizer
-    # __capture_panel: wx.Panel
-    # __text_panel: wx.Panel
-    # __capture_button : wx.Button
+    __main_sizer: wx.BoxSizer    
     __grab_frame: GrabFrame
     __capture_bitmap: wx.StaticBitmap
+    __result_bitmap : wx.Bitmap
     __result_text: wx.TextCtrl
-    # __result_bitmap : wx.Bitmap
     __handler_map: dict
     __keymap: dict
-    __filedialog_map: dict
-
+    
     def __init__(self, title):
         super().__init__(None,
                          title=title,
@@ -40,34 +36,24 @@ class Mainframe(wx.Frame):
         }
 
         self.__keymap = {}
-
+        self.__result_bitmap = None
         self.__InitUi()
 
-        # self.__result_text.Bind(wx.EVT_KEY_DOWN, self.__OnKeyDown)
-        self.__result_text.Bind(wx.EVT_CHAR, self.__OnChar)
-
-        # self.grab_bitmap : wx.Bitmap = None
-        # self.__result_bitmap: wx.Bitmap = None
-
     def __InitUi(self):
+        self.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
+        self.SetForegroundColour('#FF0000')
+        
         self.__menu_bar = self.__InitMenu()
         self.__toolbar = self.__InitToolBar()
         self.__main_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        # upper_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        # downer_sizer = wx.BoxSizer(wx.VERTICAL)
-
+        
         self.__main_sizer.Add(self.__InitCapturePanel(), 1, wx.EXPAND)
         self.__main_sizer.Add(self.__InitRecognizeResPanel(), 1, wx.EXPAND)
 
-        # downer_sizer.Add(self.__InitCaptureButton(), 0, wx.ALIGN_LEFT | wx.ALL, 10)
-        # downer_sizer.Add(self.__InitRecognizeButton(), 0, wx.ALIGN_LEFT | wx.ALL, 10)
-
-        # self.__main_sizer.Add(upper_sizer, 1, wx.EXPAND)
-        # self.__main_sizer.Add(downer_sizer, 0, wx.EXPAND)
-
         self.SetSizer(self.__main_sizer)
-
         self.CreateStatusBar()
+
+        self.Bind(wx.EVT_SIZE, self.__OnResize)        
 
     def __InitMenu(self):
         menu_bar = wx.MenuBar()
@@ -92,19 +78,9 @@ class Mainframe(wx.Frame):
                             'id': item['property']['id']
                         }
             menu_bar.Append(menu, menu_info['title'])
-        # print(self.__handler_map)
+        
         self.SetMenuBar(menu_bar)
 
-        # self.Bind(wx.EVT_MENU, self.__OnNew, id=100)
-        # self.Bind(wx.EVT_MENU, self.__OnOpenImage, id=101)
-        # self.Bind(wx.EVT_MENU, self.__OnSaveCapture, id=102)
-        # self.Bind(wx.EVT_MENU, self.__OnSaveText, id=103)
-        # self.Bind(wx.EVT_MENU, self.__OnExit, id=199)
-        # self.Bind(wx.EVT_MENU, self.__OnCapture, id=200)
-        # self.Bind(wx.EVT_MENU, self.__OnRecognize, id=201)
-        # self.Bind(wx.EVT_MENU, self.__OnSetting, id=210)
-        # self.Bind(wx.EVT_MENU, self.__OnHelp, id=300)
-        # self.Bind(wx.EVT_MENU, self.__OnAbout, id=301)
         return menu_bar
 
     def __InitToolBar(self):
@@ -138,56 +114,27 @@ class Mainframe(wx.Frame):
         return toolbar
 
     def __InitCapturePanel(self) -> wx.BoxSizer:
-        # sizer = wx.BoxSizer(wx.HORIZONTAL)
-        # self.__capture_panel = wx.Panel(self, wx.ID_ANY, style=wx.TAB_TRAVERSAL | wx.NO_BORDER)
-        # panel_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.__capture_bitmap = wx.StaticBitmap(self)
-        # self.__capture_bitmap.SetScaleMode(wx.StaticBitmap.Scale_AspectFit)
-        # panel_sizer.Add(self.__capture_bitmap, 1, wx.EXPAND)
-        # self.__capture_panel.SetSizer(panel_sizer)
-
-        # sizer.Add(self.__capture_panel, 1, wx.EXPAND)
-
         return self.__capture_bitmap
 
     def __InitRecognizeResPanel(self) -> wx.BoxSizer:
-        # sizer = wx.BoxSizer(wx.HORIZONTAL)
-        # self.__text_panel = wx.Panel(self, wx.ID_ANY, style=wx.TAB_TRAVERSAL | wx.NO_BORDER)
-        # panel_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.__result_text = wx.TextCtrl(self,
                                          style=wx.TE_MULTILINE | wx.TE_LEFT)
-        # panel_sizer.Add(self.__result_text, 1, wx.EXPAND)
-        # self.__text_panel.SetSizer(panel_sizer)
-
-        # sizer.Add(self.__text_panel, 1, wx.EXPAND)
-
+        self.__result_text.Bind(wx.EVT_CHAR, self.__OnChar)
         return self.__result_text
-
-    # def __InitCaptureButton(self) -> wx.BoxSizer:
-    #     sizer = wx.BoxSizer(wx.HORIZONTAL)
-    #     self.__capture_button = wx.Button(self, wx.ID_ANY, u'截图')
-    #     sizer.Add(self.__capture_button, 0, wx.EXPAND)
-    #     self.__capture_button.Bind(wx.EVT_BUTTON, self.__OnClick)
-    #     return sizer
-
-    # def __InitRecognizeButton(self) -> wx.BoxSizer:
-    #     sizer = wx.BoxSizer(wx.HORIZONTAL)
-    #     self.__recognize_button = wx.Button(self, wx.ID_ANY, u'识别')
-    #     sizer.Add(self.__recognize_button, 0, wx.EXPAND)
-    #     self.__recognize_button.Bind(wx.EVT_BUTTON, self.__OnRecognize)
-    #     return sizer
 
     def __OnNew(self, evt):
         self.__capture_bitmap.SetBitmap(wx.NullBitmap)
         self.__result_text.SetValue('')
+        self.Layout()
         return
 
     def __OnOpenImage(self, evt: wx.Event):
         path = self.__OpenDialog(evt.GetId())
         open_image = wx.Bitmap(path)
-        self.__capture_bitmap.SetBitmap(open_image)
-        self.Layout()
-        self.Refresh()
+        self.__result_bitmap = wx.Bitmap(open_image)
+        self.__SetCaptureBitmap(open_image)
+        # self.Layout()
         return
 
     def __OnSaveCapture(self, evt: wx.Event):
@@ -226,21 +173,18 @@ class Mainframe(wx.Frame):
 
     def __OnExit(self, evt):
         self.Destroy()
-        # exit(0)
         return
 
     def __OnCapture(self, evt):
         self.Hide()
         if not self.IsShown():
-            # self.grab_bitmap = self.__GetScreenBmp()
-            # wx.Sleep(1)
             wx.MilliSleep(250)
             screen_bitmap = self.__GetScreenBmp()
             self.__grab_frame: GrabFrame = GrabFrame(self, screen_bitmap)
         return
 
     def __OnRecognize(self, evt):
-        self.__TextRecognize(self.__capture_bitmap.GetBitmap())
+        self.__TextRecognize(self.__result_bitmap)
         return
 
     def __OnSetting(self, evt):
@@ -254,11 +198,6 @@ class Mainframe(wx.Frame):
     def __OnAbout(self, evt):
 
         return
-
-    # def __OnKeyDown(self, evt: wx.KeyEvent):
-    #     print('key down:', evt.GetKeyCode())
-    #     evt.Skip()
-    #     return
 
     def __OnChar(self, evt: wx.KeyEvent):
         key_code = evt.GetKeyCode()
@@ -296,11 +235,37 @@ class Mainframe(wx.Frame):
 
     def ProcessGrabBitmap(self, _grab_bitmap: wx.Bitmap):
         self.__grab_frame.Destroy()
-        self.__capture_bitmap.SetScaleMode(wx.StaticBitmap.Scale_AspectFit)
-        self.__capture_bitmap.SetBitmap(_grab_bitmap)
+        self.__result_bitmap = wx.Bitmap(_grab_bitmap)
+        self.__capture_bitmap.SetScaleMode(wx.StaticBitmap.Scale_AspectFill)
+        self.__SetCaptureBitmap(_grab_bitmap)
+        wx.MilliSleep(250)
+        self.__TextRecognize(self.__result_bitmap)
+        return
+    
+    def __SetCaptureBitmap(self, bitmap : wx.Bitmap):
+        ctrl_width, ctrl_height = self.__capture_bitmap.GetSize()
+        bitmap_width, bitmap_height = bitmap.GetSize()
+        ctrl_ratio = ctrl_width / ctrl_height
+        bitmap_ratio = bitmap_width / bitmap_height
+        if bitmap_ratio >= ctrl_ratio:
+            target_width = ctrl_width
+            target_height = target_width / bitmap_width * bitmap_height
+        else:
+            target_height = ctrl_height
+            target_width = ctrl_height / bitmap_height * bitmap_width
+        print('ctrl size: ', (ctrl_width, ctrl_height), 'bitmap size: ', (bitmap_width, bitmap_height), 'target size: ', (target_width, target_height))
+        print(bitmap is self.__result_bitmap)
+        wx.Bitmap.Rescale(bitmap, (target_width, target_height))
+        self.__capture_bitmap.SetBitmap(bitmap)
         self.Layout()
-        self.Refresh()
-        # wx.Sleep(0.5)
-        self.__TextRecognize(_grab_bitmap)
-        # self.__result_bitmap = _grab_bitmap
+        return
+    
+    def __OnResize(self, evt : wx.SizeEvent):
+        frame_width, frame_height = evt.GetSize()        
+        self.__capture_bitmap.SetSize(frame_width / 2, 
+                                self.__capture_bitmap.GetSize().GetHeight())
+        if self.__result_bitmap:
+            self.__SetCaptureBitmap(wx.Bitmap(self.__result_bitmap))
+
+        evt.Skip()
         return
