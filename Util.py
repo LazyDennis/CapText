@@ -12,7 +12,7 @@ def GetIcon(_icon_path : str, _icon_size : tuple):
 
 def GetMenuById(id: int):
     for menu in GlobalVars.MENUS:
-        for item in menu['items']:
+        for item in menu['menu_items']:
             if item['property']['id'] == id:
                 return item
     return None

@@ -37,7 +37,7 @@ MENUS = [
                 'dialog':
                 {
                     'message': u'打开图片',
-                    'wildcard': u'图像文件|.bmp|.jpg|.gif|.tif|.png',
+                    'wildcard': u'支持的图像文件(*.bmp;*.jpg;*.gif;*.tif;*.png)|*.bmp;*.jpg;*.gif;*.tif;*.png',
                     'style': wx.FD_OPEN | wx.FD_PREVIEW
                 }
             },
@@ -55,7 +55,11 @@ MENUS = [
                 'dialog':
                 {
                     'message': u'保存当前截图',
-                    'wildcard': u'图像文件|.bmp|.jpg|.gif|.tif|.png',
+                    'wildcard': u'位图文件(*.bmp)|*.bmp|'+\
+                                u'JPEG文件(*.jpg)|*.jpg|'+\
+                                u'动画文件(*.gif)|*.gif|'+\
+                                u'TIFF文件(*.tif)|*.tif|'+\
+                                u'PNG文件(*.png)|*.png',
                     'style': wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
                 }
             },
@@ -73,8 +77,8 @@ MENUS = [
                 'dialog':
                 {
                     'message': u'保存识别文本',
-                    'wildcard': u'文本文件|.txt',
-                    'style': wx.FD_OPEN | wx.FD_OVERWRITE_PROMPT
+                    'wildcard': u'文本文件(*.txt)|*.txt',
+                    'style': wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
                 }
             },
             {
@@ -87,7 +91,7 @@ MENUS = [
                 'property':
                 {
                     'id': 109,
-                    'text': u'退出\tCTRL+&X',
+                    'text': u'退出\tCTRL+&E',
                     'helpString': u'退出程序',
                     'kind': wx.ITEM_NORMAL
                 },
@@ -135,7 +139,7 @@ MENUS = [
                 'property':
                 {
                     'id': 112,
-                    'text': u'设定\tCTRL+&C',
+                    'text': u'设定\tCTRL+&I',
                     'helpString': u'变更设定',
                     'kind': wx.ITEM_NORMAL
                 },
@@ -177,3 +181,10 @@ MENUS = [
     }
 ]
 
+BITMAP_TYPE_MAP ={
+    'bmp' : wx.BITMAP_TYPE_BMP,
+    'jpg' : wx.BITMAP_TYPE_JPEG,
+    'gif' : wx.BITMAP_TYPE_GIF,
+    'tif' : wx.BITMAP_TYPE_TIF,
+    'png' : wx.BITMAP_TYPE_PNG
+}
