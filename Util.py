@@ -1,4 +1,5 @@
 import wx
+import GlobalVars
 
 def GetIcon(_icon_path : str, _icon_size : tuple):
     import os
@@ -7,4 +8,12 @@ def GetIcon(_icon_path : str, _icon_size : tuple):
         image.Rescale(_icon_size[0], _icon_size[1])
         return wx.Bitmap(image)
     else:
-        return None
+        return wx.NullBitmap
+
+def GetMenuById(id: int):
+    for menu in GlobalVars.MENUS:
+        for item in menu['items']:
+            if item['property']['id'] == id:
+                return item
+    return None
+

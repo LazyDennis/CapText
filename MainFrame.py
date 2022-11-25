@@ -10,8 +10,8 @@ import GlobalVars
 
 class Mainframe(wx.Frame):
     __main_sizer: wx.BoxSizer
-    __capture_panel: wx.Panel
-    __text_panel: wx.Panel
+    # __capture_panel: wx.Panel
+    # __text_panel: wx.Panel
     # __capture_button : wx.Button
     __grab_frame: GrabFrame
     __capture_bitmap: wx.StaticBitmap
@@ -24,19 +24,19 @@ class Mainframe(wx.Frame):
                          size=wx.Size(wx.GetDisplaySize().GetWidth() * 0.5,
                                       wx.GetDisplaySize().GetHeight() * 0.5))
         self.__handler_map = {
-            '__OnNew': self.__OnNew, 
-            '__OnOpenImage': self.__OnOpenImage, 
-            '__OnSaveCapture': self.__OnSaveCapture, 
-            '__OnSaveText': self.__OnSaveText, 
-            '__OnExit': self.__OnExit, 
-            '__OnCapture': self.__OnCapture, 
-            '__OnRecognize': self.__OnRecognize, 
-            '__OnSetting': self.__OnSetting, 
-            '__OnHelp': self.__OnHelp, 
+            '__OnNew': self.__OnNew,
+            '__OnOpenImage': self.__OnOpenImage,
+            '__OnSaveCapture': self.__OnSaveCapture,
+            '__OnSaveText': self.__OnSaveText,
+            '__OnExit': self.__OnExit,
+            '__OnCapture': self.__OnCapture,
+            '__OnRecognize': self.__OnRecognize,
+            '__OnSetting': self.__OnSetting,
+            '__OnHelp': self.__OnHelp,
             '__OnAbout': self.__OnAbout}
-        
+
         self.__keymap = {}
-        
+
         self.__InitUi()
 
         # self.__result_text.Bind(wx.EVT_KEY_DOWN, self.__OnKeyDown)
@@ -46,18 +46,19 @@ class Mainframe(wx.Frame):
         # self.__result_bitmap: wx.Bitmap = None
 
     def __InitUi(self):
-        self.__InitMenu()
-        self.__main_sizer = wx.BoxSizer(wx.VERTICAL)
-        upper_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.__menu_bar = self.__InitMenu()
+        self.__toolbar = self.__InitToolBar()
+        self.__main_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        # upper_sizer = wx.BoxSizer(wx.HORIZONTAL)
         # downer_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        upper_sizer.Add(self.__InitCapturePanel(), 1, wx.EXPAND)
-        upper_sizer.Add(self.__InitRecognizeResPanel(), 1, wx.EXPAND)
+        self.__main_sizer.Add(self.__InitCapturePanel(), 1, wx.EXPAND)
+        self.__main_sizer.Add(self.__InitRecognizeResPanel(), 1, wx.EXPAND)
 
         # downer_sizer.Add(self.__InitCaptureButton(), 0, wx.ALIGN_LEFT | wx.ALL, 10)
         # downer_sizer.Add(self.__InitRecognizeButton(), 0, wx.ALIGN_LEFT | wx.ALL, 10)
 
-        self.__main_sizer.Add(upper_sizer, 1, wx.EXPAND)
+        # self.__main_sizer.Add(upper_sizer, 1, wx.EXPAND)
         # self.__main_sizer.Add(downer_sizer, 0, wx.EXPAND)
 
         self.SetSizer(self.__main_sizer)
@@ -65,8 +66,7 @@ class Mainframe(wx.Frame):
         self.CreateStatusBar()
 
     def __InitMenu(self):
-        import os
-        self.menu_bar = wx.MenuBar()
+        menu_bar = wx.MenuBar()
 
         for menu_info in GlobalVars.MENUS:
             menu = wx.Menu()
@@ -74,9 +74,7 @@ class Mainframe(wx.Frame):
                 menu_item = wx.MenuItem(**item['property'])
                 if 'icon' in item and item['icon']:
                     icon_path = GlobalVars.ICON_PATH + item['icon']
-                    if os.path.exists(icon_path):
-                        menu_item.SetBitmap(
-                            Util.GetIcon(
+                    menu_item.SetBitmap(Util.GetIcon(
                                 icon_path, GlobalVars.ICON_SETTING['menu_icon']))
                 menu.Append(menu_item)
                 if 'handler' in item and item['handler']:
@@ -85,10 +83,9 @@ class Mainframe(wx.Frame):
                     lastchar = item['property']['text'][-1::]
                     if ord(lastchar) >= ord('A') and ord(lastchar) <= ord('Z'):
                         self.__keymap[ord(lastchar) - ord('A') + 1] = handler
-            self.menu_bar.Append(menu, menu_info['title'])
-
-        print(self.__handler_map)
-        self.SetMenuBar(self.menu_bar)
+            menu_bar.Append(menu, menu_info['title'])
+        # print(self.__handler_map)
+        self.SetMenuBar(menu_bar)
 
         # self.Bind(wx.EVT_MENU, self.__OnNew, id=100)
         # self.Bind(wx.EVT_MENU, self.__OnOpenImage, id=101)
@@ -100,7 +97,41 @@ class Mainframe(wx.Frame):
         # self.Bind(wx.EVT_MENU, self.__OnSetting, id=210)
         # self.Bind(wx.EVT_MENU, self.__OnHelp, id=300)
         # self.Bind(wx.EVT_MENU, self.__OnAbout, id=301)
-        return
+        return menu_bar
+
+    def __InitToolBar(self):
+        toolbar : wx.ToolBar = self.CreateToolBar(wx.TB_FLAT | wx.TB_HORIZONTAL | wx.TB_TEXT)
+        for menu in GlobalVars.MENUS:
+            for item in menu['menu_items']:
+                if 'toolbartool' in item and item['toolbartool']:
+                    if 'icon' in item and item['icon']:
+                        icon_path = GlobalVars.ICON_PATH + item['icon']
+                        icon_bmp = Util.GetIcon(
+                                    icon_path, GlobalVars.ICON_SETTING['toolbar_icon'])
+                    label_text: str = item['property']['text']
+                    label : str = ''
+                    help_string = item['property']['helpString']
+                    pos = label_text.find('CTRL')
+                    if ~pos :
+                        label = label_text[:pos:]
+                        shortcut_key = label_text[pos::]
+                        pos = shortcut_key.find('&')
+                        shortcut_key = shortcut_key[:pos:] + shortcut_key[pos + 1::]
+                        help_string += '(' + shortcut_key + ')'
+                    toolbar.AddTool(
+                        item['property']['id'],
+                        label,
+                        icon_bmp,
+                        wx.NullBitmap,
+                        wx.ITEM_NORMAL,
+                        help_string,
+                        help_string
+                    )
+            toolbar.AddSeparator()
+
+        toolbar.Realize()
+
+        return toolbar
 
     def __InitCapturePanel(self) -> wx.BoxSizer:
         # sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -148,7 +179,7 @@ class Mainframe(wx.Frame):
         return
 
     def __OnOpenImage(self, evt):
-
+        dialog = wx.FileDialog(self)
         return
 
     def __OnSaveCapture(self, evt):
@@ -156,6 +187,10 @@ class Mainframe(wx.Frame):
         return
 
     def __OnSaveText(self, evt):
+
+        return
+
+    def __OpenDialog(self, evt):
 
         return
 

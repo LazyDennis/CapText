@@ -20,7 +20,8 @@ MENUS = [
                     'kind': wx.ITEM_NORMAL
                 },
                 'icon': u'创建_newlybuild.png',
-                'handler': '__OnNew'
+                'handler': '__OnNew',
+                'toolbartool': True
             },
             {
                 'property':
@@ -31,7 +32,14 @@ MENUS = [
                     'kind': wx.ITEM_NORMAL
                 },
                 'icon': u'图片文件_image-files.png',
-                'handler': '__OnOpenImage'
+                'handler': '__OnOpenImage',
+                'toolbartool': True,
+                'dialog':
+                {
+                    'message': u'打开图片',
+                    'wildcard': u'图像文件|.bmp|.jpg|.gif|.tif|.png',
+                    'style': wx.FD_OPEN | wx.FD_PREVIEW
+                }
             },
             {
                 'property':
@@ -42,7 +50,14 @@ MENUS = [
                     'kind': wx.ITEM_NORMAL
                 },
                 'icon': u'图片下载_down-picture.png',
-                'handler': '__OnSaveCapture'
+                'handler': '__OnSaveCapture',
+                'toolbartool': True,
+                'dialog':
+                {
+                    'message': u'保存当前截图',
+                    'wildcard': u'图像文件|.bmp|.jpg|.gif|.tif|.png',
+                    'style': wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
+                }
             },
             {
                 'property':
@@ -53,7 +68,14 @@ MENUS = [
                     'kind': wx.ITEM_NORMAL
                 },
                 'icon': u'文本文件_file-text.png',
-                'handler': '__OnSaveText'
+                'handler': '__OnSaveText',
+                'toolbartool': True,
+                'dialog':
+                {
+                    'message': u'保存识别文本',
+                    'wildcard': u'文本文件|.txt',
+                    'style': wx.FD_OPEN | wx.FD_OVERWRITE_PROMPT
+                }
             },
             {
                 'property':
@@ -64,13 +86,14 @@ MENUS = [
             {
                 'property':
                 {
-                    'id': 199,
-                    'text': u'退出(&X)\tCTRL+&X',
+                    'id': 109,
+                    'text': u'退出\tCTRL+&X',
                     'helpString': u'退出程序',
                     'kind': wx.ITEM_NORMAL
                 },
                 'icon': u'退出_logout.png',
-                'handler': '__OnExit'
+                'handler': '__OnExit',
+                'toolbartool': True
             }
         ]
     },
@@ -81,24 +104,26 @@ MENUS = [
             {
                 'property':
                 {
-                    'id': 200,
+                    'id': 110,
                     'text': u'截图\tCTRL+&K',
                     'helpString': u'获取截图',
                     'kind': wx.ITEM_NORMAL
                 },
                 'icon': u'截图_screenshot-one.png',
-                'handler': '__OnCapture'
+                'handler': '__OnCapture',
+                'toolbartool': True
             },
             {
                 'property':
                 {
-                    'id': 201,
+                    'id': 111,
                     'text': u'识别\tCTRL+&R',
                     'helpString': u'识别当前截图',
                     'kind': wx.ITEM_NORMAL
                 },
                 'icon': u'文字识别_text-recognition.png',
-                'handler': '__OnRecognize'
+                'handler': '__OnRecognize',
+                'toolbartool': True
             },
             {
                 'property':
@@ -109,13 +134,14 @@ MENUS = [
             {
                 'property':
                 {
-                    'id': 210,
+                    'id': 112,
                     'text': u'设定\tCTRL+&C',
                     'helpString': u'变更设定',
                     'kind': wx.ITEM_NORMAL
                 },
                 'icon': u'设置_setting-two.png',
-                'handler': '__OnSetting'
+                'handler': '__OnSetting',
+                'toolbartool': True
             }
         ]
     },
@@ -126,27 +152,28 @@ MENUS = [
             {
                 'property':
                 {
-                    'id': 300,
-                    'text': u'帮助(&H)\tCTRL+&H',
+                    'id': 130,
+                    'text': u'帮助\tCTRL+&H',
                     'helpString': u'获取帮助',
                     'kind': wx.ITEM_NORMAL
                 },
                 'icon': u'帮助_help.png',
-                'handler': '__OnHelp'
+                'handler': '__OnHelp',
+                'toolbartool': True
             },
             {
                 'property':
                 {
-                    'id': 301,
+                    'id': 131,
                     'text': u'关于',
                     'helpString': u'关于',
                     'kind': wx.ITEM_NORMAL
                 },
                 'icon': u'信息_info.png',
-                'handler': '__OnAbout'
+                'handler': '__OnAbout',
+                'toolbartool': False
             }
         ]
     }
 ]
 
-TOOLBARS = []
