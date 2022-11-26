@@ -16,8 +16,6 @@ class Mainframe(wx.Frame):
     __result_text: wx.TextCtrl
     __handler_map: dict
     __keymap: dict
-    __clipboard: wx.Clipboard
-    
     
     def __init__(self, title):
         self.DEFAULT_WINDOW_SIZE = wx.Size(wx.GetDisplaySize().GetWidth() * 0.5,
@@ -42,12 +40,12 @@ class Mainframe(wx.Frame):
             wx.WXK_ESCAPE: {'handler': self.__OnKeyEsc, 'id': wx.ID_ANY}
         }
         self.__result_bitmap = None
-        self.__clipboard = wx.Clipboard()
+               
         self.__InitUi()
 
     def __InitUi(self):
-        self.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
-        self.SetForegroundColour('#FF0000')
+        # self.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
+        # self.SetForegroundColour('#FF0000')
         
         self.__menu_bar = self.__InitMenu()
         self.__toolbar = self.__InitToolBar()
@@ -57,7 +55,13 @@ class Mainframe(wx.Frame):
         self.__main_sizer.Add(self.__InitRecognizeResPanel(), 1, wx.EXPAND)
 
         self.SetSizer(self.__main_sizer)
-        self.CreateStatusBar()
+        self.__status_bar: wx.StatusBar = self.CreateStatusBar()
+        
+        # color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
+        # self.__menu_bar.SetBackgroundColour(color)
+        # self.__toolbar.SetBackgroundColour(color)
+        # self.SetBackgroundColour(color)
+        # self.__status_bar.SetBackgroundColour(color)
 
         self.Bind(wx.EVT_SIZE, self.__OnResize)        
 
@@ -222,7 +226,6 @@ class Mainframe(wx.Frame):
 
     def __OnChar(self, _evt: wx.KeyEvent):
         key_code = _evt.GetKeyCode()
-        print('key_code', key_code)
         if key_code in self.__keymap:
             _evt.SetId(self.__keymap[key_code]['id'])
             self.__keymap[key_code]['handler'](_evt)
@@ -257,10 +260,9 @@ class Mainframe(wx.Frame):
     def ProcessGrabBitmap(self, _grab_bitmap: wx.Bitmap):
         self.Show()
         self.__result_bitmap = wx.Bitmap(_grab_bitmap)
-        self.__grab_frame.Close()
-        self.__CopyBitmapToClipboard(self.__result_bitmap)
-        self.__capture_bitmap.SetScaleMode(wx.StaticBitmap.Scale_AspectFill)
+        # self.__CopyBitmapToClipboard(self.__result_bitmap)
         self.__SetCaptureBitmap(_grab_bitmap)
+        self.__grab_frame.Close()
         return
     
     def __SetCaptureBitmap(self, _bitmap : wx.Bitmap):
@@ -289,12 +291,12 @@ class Mainframe(wx.Frame):
         _evt.Skip()
         return
     
-    def __CopyBitmapToClipboard(self, _data : wx.Bitmap):
-        self.__clipboard.SetData(wx.ImageDataObject(_data.ConvertToImage()))
-        return
+    # def __CopyBitmapToClipboard(self, _data : wx.Bitmap):
+    #     wx.TheClipboard.SetData(wx.ImageDataObject(_data.ConvertToImage()))
+    #     return
     
     def __OnGrabFrameHidden(self, _evt : wx.ShowEvent):
-        if not _evt.IsShown():
+        if not _evt.IsShown() and self.__result_bitmap:
             self.__TextRecognize(self.__result_bitmap)
 
     def __OnKeyEsc(self, evt):
