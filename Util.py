@@ -10,10 +10,10 @@ def GetIcon(_icon_path : str, _icon_size : tuple):
     else:
         return wx.NullBitmap
 
-def GetMenuById(id: int):
+def GetMenuById(_id: int):
     for menu in GlobalVars.MENUS:
         for item in menu['menu_items']:
-            if item['property']['id'] == id:
+            if item['property']['id'] == _id:
                 return item
     return None
 

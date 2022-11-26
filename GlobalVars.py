@@ -128,24 +128,24 @@ MENUS = [
                 'icon': u'文字识别_text-recognition.png',
                 'handler': '__OnRecognize',
                 'toolbartool': True
-            },
-            {
-                'property':
-                {
-                    'id': wx.ID_SEPARATOR
-                }
-            },
-            {
-                'property':
-                {
-                    'id': 112,
-                    'text': u'设定\tCTRL+&I',
-                    'helpString': u'变更设定',
-                    'kind': wx.ITEM_NORMAL
-                },
-                'icon': u'设置_setting-two.png',
-                'handler': '__OnSetting',
-                'toolbartool': True
+            # },
+            # {
+            #     'property':
+            #     {
+            #         'id': wx.ID_SEPARATOR
+            #     }
+            # },
+            # {
+            #     'property':
+            #     {
+            #         'id': 112,
+            #         'text': u'设定\tCTRL+&I',
+            #         'helpString': u'变更设定',
+            #         'kind': wx.ITEM_NORMAL
+            #     },
+            #     'icon': u'设置_setting-two.png',
+            #     'handler': '__OnSetting',
+            #     'toolbartool': True
             }
         ]
     # },

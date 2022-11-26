@@ -16,12 +16,15 @@ class Mainframe(wx.Frame):
     __result_text: wx.TextCtrl
     __handler_map: dict
     __keymap: dict
+    __clipboard: wx.Clipboard
+    
     
     def __init__(self, title):
+        self.DEFAULT_WINDOW_SIZE = wx.Size(wx.GetDisplaySize().GetWidth() * 0.5,
+                                      wx.GetDisplaySize().GetHeight() * 0.5)
         super().__init__(None,
                          title=title,
-                         size=wx.Size(wx.GetDisplaySize().GetWidth() * 0.5,
-                                      wx.GetDisplaySize().GetHeight() * 0.5))
+                         size=self.DEFAULT_WINDOW_SIZE)
         self.__handler_map = {
             '__OnNew': self.__OnNew,
             '__OnOpenImage': self.__OnOpenImage,
@@ -35,8 +38,11 @@ class Mainframe(wx.Frame):
             '__OnAbout': self.__OnAbout
         }
 
-        self.__keymap = {}
+        self.__keymap = {
+            wx.WXK_ESCAPE: {'handler': self.__OnKeyEsc, 'id': wx.ID_ANY}
+        }
         self.__result_bitmap = None
+        self.__clipboard = wx.Clipboard()
         self.__InitUi()
 
     def __InitUi(self):
@@ -107,38 +113,41 @@ class Mainframe(wx.Frame):
                     toolbar.AddTool(item['property']['id'], label, icon_bmp,
                                     wx.NullBitmap, wx.ITEM_NORMAL, help_string,
                                     help_string)
-            toolbar.AddSeparator()
+            if GlobalVars.MENUS.index(menu) < len(GlobalVars.MENUS) - 1:
+                toolbar.AddSeparator()
 
         toolbar.Realize()
 
         return toolbar
 
-    def __InitCapturePanel(self) -> wx.BoxSizer:
+    def __InitCapturePanel(self):
         self.__capture_bitmap = wx.StaticBitmap(self)
         return self.__capture_bitmap
 
-    def __InitRecognizeResPanel(self) -> wx.BoxSizer:
+    def __InitRecognizeResPanel(self):
         self.__result_text = wx.TextCtrl(self,
                                          style=wx.TE_MULTILINE | wx.TE_LEFT)
         self.__result_text.Bind(wx.EVT_CHAR, self.__OnChar)
         return self.__result_text
 
-    def __OnNew(self, evt):
+    def __OnNew(self, _evt):
+        self.SetSize(self.DEFAULT_WINDOW_SIZE)
         self.__capture_bitmap.SetBitmap(wx.NullBitmap)
+        self.__result_bitmap = None
         self.__result_text.SetValue('')
         self.Layout()
+        self.Refresh()
         return
 
-    def __OnOpenImage(self, evt: wx.Event):
-        path = self.__OpenDialog(evt.GetId())
+    def __OnOpenImage(self, _evt: wx.Event):
+        path = self.__OpenDialog(_evt.GetId())
         open_image = wx.Bitmap(path)
         self.__result_bitmap = wx.Bitmap(open_image)
         self.__SetCaptureBitmap(open_image)
-        # self.Layout()
         return
 
-    def __OnSaveCapture(self, evt: wx.Event):
-        id = evt.GetId()
+    def __OnSaveCapture(self, _evt: wx.Event):
+        id = _evt.GetId()
         path: str = self.__OpenDialog(id)
         bitmap_type = path[-3::].lower()
         if bitmap_type not in GlobalVars.BITMAP_TYPE_MAP:
@@ -154,14 +163,14 @@ class Mainframe(wx.Frame):
 
         return
 
-    def __OnSaveText(self, evt: wx.Event):
-        id = evt.GetId()
+    def __OnSaveText(self, _evt: wx.Event):
+        id = _evt.GetId()
         path = self.__OpenDialog(id)
         self.__result_text.SaveFile(path)
         return
 
-    def __OpenDialog(self, id):
-        item = Util.GetMenuById(id)
+    def __OpenDialog(self, _id):
+        item = Util.GetMenuById(_id)
         dialog = wx.FileDialog(self, **item['dialog'])
         res = dialog.ShowModal()
         path = None
@@ -171,50 +180,62 @@ class Mainframe(wx.Frame):
         dialog.Destroy()
         return path
 
-    def __OnExit(self, evt):
-        self.Destroy()
+    def __OnExit(self, _evt):
+        wx.Exit()
         return
 
-    def __OnCapture(self, evt):
+    def __OnCapture(self, _evt):
+        displays = []
+        display_sum_width = 0
+        display_sum_heigth = 0
+        for i in range(wx.Display.GetCount()):
+            display = wx.Display(i)
+            displays.append(display)
+            display_sum_width += display.Geometry[2]
+            display_sum_heigth += display.Geometry[3]
+            
         self.Hide()
         if not self.IsShown():
             wx.MilliSleep(250)
-            screen_bitmap = self.__GetScreenBmp()
-            self.__grab_frame: GrabFrame = GrabFrame(self, screen_bitmap)
+            screen_bitmap = self.__GetScreenBmp(wx.Size(display_sum_width, display_sum_heigth))
+            self.__grab_frame: GrabFrame = GrabFrame(self, screen_bitmap, (display_sum_width, display_sum_heigth)) # wx.GetDisplaySize())
+            self.__grab_frame.Bind(wx.EVT_SHOW, self.__OnGrabFrameHidden)
+            self.__grab_frame.Bind(wx.EVT_CHAR, self.__OnChar)
         return
 
-    def __OnRecognize(self, evt):
-        self.__TextRecognize(self.__result_bitmap)
+    def __OnRecognize(self, _evt):
+        if self.__result_bitmap:
+            self.__TextRecognize(self.__result_bitmap)
         return
 
-    def __OnSetting(self, evt):
-
-        return
-
-    def __OnHelp(self, evt):
-
-        return
-
-    def __OnAbout(self, evt):
+    def __OnSetting(self, _evt):
 
         return
 
-    def __OnChar(self, evt: wx.KeyEvent):
-        key_code = evt.GetKeyCode()
+    def __OnHelp(self, _evt):
+
+        return
+
+    def __OnAbout(self, _evt):
+
+        return
+
+    def __OnChar(self, _evt: wx.KeyEvent):
+        key_code = _evt.GetKeyCode()
+        print('key_code', key_code)
         if key_code in self.__keymap:
-            evt.SetId(self.__keymap[key_code]['id'])
-            self.__keymap[key_code]['handler'](evt)
+            _evt.SetId(self.__keymap[key_code]['id'])
+            self.__keymap[key_code]['handler'](_evt)
         else:
-            evt.Skip()
+            _evt.Skip()
         return
 
-    def __GetScreenBmp(self):
-        s: wx.Size = wx.GetDisplaySize()
-        bmp: wx.Bitmap = wx.Bitmap(s.x, s.y)
+    def __GetScreenBmp(self, _display_size : wx.Size):
+        bmp: wx.Bitmap = wx.Bitmap(_display_size.x, _display_size.y)
         dc = wx.ScreenDC()
         memdc = wx.MemoryDC()
         memdc.SelectObject(bmp)
-        memdc.Blit(0, 0, s.x, s.y, dc, 0, 0)
+        memdc.Blit(0, 0, _display_size.x, _display_size.y, dc, 0, 0)
         memdc.SelectObject(wx.NullBitmap)
         return bmp
 
@@ -234,17 +255,17 @@ class Mainframe(wx.Frame):
         return
 
     def ProcessGrabBitmap(self, _grab_bitmap: wx.Bitmap):
-        self.__grab_frame.Destroy()
+        self.Show()
         self.__result_bitmap = wx.Bitmap(_grab_bitmap)
+        self.__grab_frame.Close()
+        self.__CopyBitmapToClipboard(self.__result_bitmap)
         self.__capture_bitmap.SetScaleMode(wx.StaticBitmap.Scale_AspectFill)
         self.__SetCaptureBitmap(_grab_bitmap)
-        wx.MilliSleep(250)
-        self.__TextRecognize(self.__result_bitmap)
         return
     
-    def __SetCaptureBitmap(self, bitmap : wx.Bitmap):
+    def __SetCaptureBitmap(self, _bitmap : wx.Bitmap):
         ctrl_width, ctrl_height = self.__capture_bitmap.GetSize()
-        bitmap_width, bitmap_height = bitmap.GetSize()
+        bitmap_width, bitmap_height = _bitmap.GetSize()
         ctrl_ratio = ctrl_width / ctrl_height
         bitmap_ratio = bitmap_width / bitmap_height
         if bitmap_ratio >= ctrl_ratio:
@@ -253,19 +274,31 @@ class Mainframe(wx.Frame):
         else:
             target_height = ctrl_height
             target_width = ctrl_height / bitmap_height * bitmap_width
-        print('ctrl size: ', (ctrl_width, ctrl_height), 'bitmap size: ', (bitmap_width, bitmap_height), 'target size: ', (target_width, target_height))
-        print(bitmap is self.__result_bitmap)
-        wx.Bitmap.Rescale(bitmap, (target_width, target_height))
-        self.__capture_bitmap.SetBitmap(bitmap)
+        wx.Bitmap.Rescale(_bitmap, (target_width, target_height))
+        self.__capture_bitmap.SetBitmap(_bitmap)
         self.Layout()
         return
     
-    def __OnResize(self, evt : wx.SizeEvent):
-        frame_width, frame_height = evt.GetSize()        
+    def __OnResize(self, _evt : wx.SizeEvent):
+        frame_width, frame_height = _evt.GetSize()        
         self.__capture_bitmap.SetSize(frame_width / 2, 
                                 self.__capture_bitmap.GetSize().GetHeight())
         if self.__result_bitmap:
             self.__SetCaptureBitmap(wx.Bitmap(self.__result_bitmap))
 
-        evt.Skip()
+        _evt.Skip()
         return
+    
+    def __CopyBitmapToClipboard(self, _data : wx.Bitmap):
+        self.__clipboard.SetData(wx.ImageDataObject(_data.ConvertToImage()))
+        return
+    
+    def __OnGrabFrameHidden(self, _evt : wx.ShowEvent):
+        if not _evt.IsShown():
+            self.__TextRecognize(self.__result_bitmap)
+
+    def __OnKeyEsc(self, evt):
+        self.__grab_frame.Hide()
+        if not self.__grab_frame.IsShown():
+            self.__grab_frame.Close()
+            self.Show()
