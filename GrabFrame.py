@@ -100,6 +100,7 @@ class GrabFrame(wx.Frame):
                 self.__on_capture = False
                 self.__first_point = wx.Point(0, 0)  #记录截图的第一个点
                 self.__last_point = wx.Point(0, 0)  #记录截图的最后一个点
+                self.__parent_frame.ProcessGrabBitmap(None)
 
             else:
                 self.__parent_frame.ProcessGrabBitmap(

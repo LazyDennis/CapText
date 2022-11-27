@@ -145,21 +145,27 @@ class Mainframe(wx.Frame):
 
     def __OnOpenImage(self, _evt: wx.Event):
         path = self.__OpenDialog(_evt.GetId())
-        open_image = wx.Bitmap(path)
-        self.__result_bitmap = wx.Bitmap(open_image)
-        self.__SetCaptureBitmap(open_image)
+        if path:
+            open_image = wx.Bitmap(path)
+            try:
+                self.__result_bitmap = wx.Bitmap(open_image)
+                self.__SetCaptureBitmap(open_image)
+            except:
+                wx.MessageBox(u'打开图片文件失败！', u'错误', style= wx.OK | wx.CENTER | wx.ICON_ERROR)
+                # return
         return
 
     def __OnSaveCapture(self, _evt: wx.Event):
         id = _evt.GetId()
-        path: str = self.__OpenDialog(id)
-        bitmap_type = path[-3::].lower()
-        if bitmap_type not in GlobalVars.BITMAP_TYPE_MAP:
-            bitmap_type = 'jpg'
-            path += '.' + bitmap_type
-        bitmap: wx.Bitmap = self.__capture_bitmap.GetBitmap()
-        if bitmap and bitmap != wx.NullBitmap:
-            bitmap.SaveFile(path, GlobalVars.BITMAP_TYPE_MAP[bitmap_type])
+        # bitmap: wx.Bitmap = self.__capture_bitmap.GetBitmap()
+        if self.__result_bitmap and self.__result_bitmap != wx.NullBitmap:
+            path: str = self.__OpenDialog(id)
+            if path:
+                bitmap_type = path[-3::].lower()
+                if bitmap_type not in GlobalVars.BITMAP_TYPE_MAP:
+                    bitmap_type = 'jpg'
+                    path += '.' + bitmap_type
+            self.__result_bitmap.SaveFile(path, GlobalVars.BITMAP_TYPE_MAP[bitmap_type])
         else:
             item = Util.GetMenuById(id)
             wx.MessageBox(u'没有可保存的截图！', item['property']['helpString'],
@@ -170,7 +176,8 @@ class Mainframe(wx.Frame):
     def __OnSaveText(self, _evt: wx.Event):
         id = _evt.GetId()
         path = self.__OpenDialog(id)
-        self.__result_text.SaveFile(path)
+        if path:
+            self.__result_text.SaveFile(path)
         return
 
     def __OpenDialog(self, _id):
@@ -248,7 +255,11 @@ class Mainframe(wx.Frame):
         image.SaveFile(temp_img, wx.BITMAP_TYPE_JPEG)
         client = AipOcr(APP_ID, API_KEY, SECRET_KEY)
         options = {'language_type': 'CHN_ENG', 'paragraph': True}
-        result = client.basicGeneral(temp_img.getvalue(), options)
+        try:
+            result = client.basicGeneral(temp_img.getvalue(), options)
+        except:
+            self.__result_text.SetValue(u'网络连接失败！')            
+            return
         print(result)
         text = ''
         for res in result['words_result']:
@@ -259,9 +270,10 @@ class Mainframe(wx.Frame):
 
     def ProcessGrabBitmap(self, _grab_bitmap: wx.Bitmap):
         self.Show()
-        self.__result_bitmap = wx.Bitmap(_grab_bitmap)
-        # self.__CopyBitmapToClipboard(self.__result_bitmap)
-        self.__SetCaptureBitmap(_grab_bitmap)
+        if _grab_bitmap:
+            self.__result_bitmap = wx.Bitmap(_grab_bitmap)
+            # self.__CopyBitmapToClipboard(self.__result_bitmap)
+            self.__SetCaptureBitmap(_grab_bitmap)
         self.__grab_frame.Close()
         return
     
