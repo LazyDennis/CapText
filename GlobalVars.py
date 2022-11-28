@@ -1,7 +1,8 @@
 import wx
 
-ICON_PATH = '.\\icon\\'
 ICON_SETTING = {
+    'frame_icon_large': (32, 32),
+    'frame_icon_small': (16, 16),
     'menu_icon': (25, 25),
     'toolbar_icon': (30, 30)
 }
@@ -128,56 +129,56 @@ MENUS = [
                 'icon': u'文字识别_text-recognition.png',
                 'handler': '__OnRecognize',
                 'toolbartool': True
-            # },
-            # {
-            #     'property':
-            #     {
-            #         'id': wx.ID_SEPARATOR
-            #     }
-            # },
-            # {
-            #     'property':
-            #     {
-            #         'id': 112,
-            #         'text': u'设定\tCTRL+&I',
-            #         'helpString': u'变更设定',
-            #         'kind': wx.ITEM_NORMAL
-            #     },
-            #     'icon': u'设置_setting-two.png',
-            #     'handler': '__OnSetting',
-            #     'toolbartool': True
+            },
+            {
+                'property':
+                {
+                    'id': wx.ID_SEPARATOR
+                }
+            },
+            {
+                'property':
+                {
+                    'id': 112,
+                    'text': u'设定\tCTRL+&I',
+                    'helpString': u'变更设定',
+                    'kind': wx.ITEM_NORMAL
+                },
+                'icon': u'设置_setting-two.png',
+                'handler': '__OnSetting',
+                'toolbartool': True
             }
         ]
-    # },
-    # {
-    #     'title': u'帮助(&H)',
-    #     'menu_items':
-    #     [  
-    #         {
-    #             'property':
-    #             {
-    #                 'id': 130,
-    #                 'text': u'帮助\tCTRL+&H',
-    #                 'helpString': u'获取帮助',
-    #                 'kind': wx.ITEM_NORMAL
-    #             },
-    #             'icon': u'帮助_help.png',
-    #             'handler': '__OnHelp',
-    #             'toolbartool': True
-    #         },
-    #         {
-    #             'property':
-    #             {
-    #                 'id': 131,
-    #                 'text': u'关于',
-    #                 'helpString': u'关于',
-    #                 'kind': wx.ITEM_NORMAL
-    #             },
-    #             'icon': u'信息_info.png',
-    #             'handler': '__OnAbout',
-    #             'toolbartool': False
-    #         }
-    #     ]
+    },
+    {
+        'title': u'帮助(&H)',
+        'menu_items':
+        [  
+            {
+                'property':
+                {
+                    'id': 130,
+                    'text': u'帮助\tCTRL+&H',
+                    'helpString': u'获取帮助',
+                    'kind': wx.ITEM_NORMAL
+                },
+                'icon': u'帮助_help.png',
+                'handler': '__OnHelp',
+                'toolbartool': True
+            },
+            {
+                'property':
+                {
+                    'id': 131,
+                    'text': u'关于',
+                    'helpString': u'关于',
+                    'kind': wx.ITEM_NORMAL
+                },
+                'icon': u'信息_info.png',
+                'handler': '__OnAbout',
+                'toolbartool': False
+            }
+        ]
     }
 ]
 

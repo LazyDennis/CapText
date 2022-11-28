@@ -1,14 +1,17 @@
-import wx
 import GlobalVars
 
 def GetIcon(_icon_path : str, _icon_size : tuple):
-    import os
-    if os.path.exists(_icon_path):
-        image = wx.Image(_icon_path)
-        image.Rescale(_icon_size[0], _icon_size[1])
-        return wx.Bitmap(image)
+    import wx
+    from icons import ICONS
+    from wx.lib.embeddedimage import PyEmbeddedImage
+
+    if _icon_path in ICONS:
+        bmp = PyEmbeddedImage(ICONS[_icon_path]).GetBitmap()
+        wx.Bitmap.Rescale(bmp, _icon_size)
     else:
-        return wx.NullBitmap
+        bmp = wx.NullBitmap
+    return bmp
+    
 
 def GetMenuById(_id: int):
     for menu in GlobalVars.MENUS:

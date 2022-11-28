@@ -46,7 +46,13 @@ class Mainframe(wx.Frame):
     def __InitUi(self):
         # self.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
         # self.SetForegroundColour('#FF0000')
+        icon_bundle = wx.IconBundle()
+        icon_bundle.AddIcon(wx.Icon(Util.GetIcon(
+            'frame_icon_large', GlobalVars.ICON_SETTING['frame_icon_large'])))
+        icon_bundle.AddIcon(wx.Icon(Util.GetIcon(
+            'frame_icon_small', GlobalVars.ICON_SETTING['frame_icon_small'])))
         
+        self.SetIcons(icon_bundle)
         self.__menu_bar = self.__InitMenu()
         self.__toolbar = self.__InitToolBar()
         self.__main_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -73,9 +79,8 @@ class Mainframe(wx.Frame):
             for item in menu_info['menu_items']:
                 menu_item = wx.MenuItem(**item['property'])
                 if 'icon' in item and item['icon']:
-                    icon_path = GlobalVars.ICON_PATH + item['icon']
                     menu_item.SetBitmap(
-                        Util.GetIcon(icon_path,
+                        Util.GetIcon(item['icon'],
                                      GlobalVars.ICON_SETTING['menu_icon']))
                 menu.Append(menu_item)
                 if 'handler' in item and item['handler']:
@@ -100,9 +105,8 @@ class Mainframe(wx.Frame):
             for item in menu['menu_items']:
                 if 'toolbartool' in item and item['toolbartool']:
                     if 'icon' in item and item['icon']:
-                        icon_path = GlobalVars.ICON_PATH + item['icon']
                         icon_bmp = Util.GetIcon(
-                            icon_path, GlobalVars.ICON_SETTING['toolbar_icon'])
+                            item['icon'], GlobalVars.ICON_SETTING['toolbar_icon'])
                     label_text: str = item['property']['text']
                     label: str = ''
                     help_string = item['property']['helpString']

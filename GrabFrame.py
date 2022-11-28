@@ -1,6 +1,5 @@
 import wx
 
-
 class GrabFrame(wx.Frame):
 
     def __init__(self, parent, _screen_bitmap: wx.Bitmap, size: wx.Size, pos: wx.Position=(0, 0)):
@@ -17,17 +16,12 @@ class GrabFrame(wx.Frame):
         self.__on_capture: bool = False  #记录是否按下鼠标左键
         self.__parent_frame: Mainframe = parent
         self.__screen_bitmap: wx.Bitmap = _screen_bitmap
-        
-        self.__keymap = {
-            wx.WXK_ESCAPE: {'handler': self.__OnKeyEsc, 'id': wx.ID_ANY}
-        }
 
         self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
         self.Bind(wx.EVT_PAINT, self.__OnPaint)
         self.Bind(wx.EVT_LEFT_DOWN, self.__OnMouseLeftDown)
         self.Bind(wx.EVT_LEFT_UP, self.__OnMouseLeftUp)
         self.Bind(wx.EVT_MOTION, self.__OnMouseMove)
-        # self.Bind(wx.EVT_CHAR, self.__OnChar)
         self.Show()
 
     def __OnPaint(self, _evt):
@@ -111,10 +105,6 @@ class GrabFrame(wx.Frame):
                             abs(self.__first_point.x - self.__last_point.x),
                             abs(self.__first_point.y - self.__last_point.y))))
 
-                # self.Destroy()
-                # self.__parent_frame.Show()
-                # self.__parent_frame.bmp.SaveFile(r'd:\test.jpg', wx.BITMAP_TYPE_JPEG)
-
     def __OnMouseMove(self, _evt):
         if (self.__on_capture):
             self.__last_point = _evt.GetPosition()
@@ -124,14 +114,3 @@ class GrabFrame(wx.Frame):
         self.RefreshRect(self.GetClientRect(), True)
         self.Update()
         
-    def __OnChar(self, _evt):
-        key_code = _evt.GetKeyCode()
-        if key_code in self.__keymap:
-            _evt.SetId(self.__keymap[key_code]['id'])
-            self.__keymap[key_code]['handler'](_evt)
-        else:
-            _evt.Skip()
-        return    
-    
-    def __OnKeyEsc(self, _evt):
-        self.Hide()
