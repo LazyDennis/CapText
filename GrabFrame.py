@@ -3,7 +3,7 @@ import wx
 
 class GrabFrame(wx.Frame):
 
-    def __init__(self, parent, _screen_bitmap: wx.Bitmap, size: wx.Size, pos=(0, 0)):
+    def __init__(self, parent, _screen_bitmap: wx.Bitmap, size: wx.Size, pos: wx.Position=(0, 0)):
         wx.Frame.__init__(self,
                           parent,
                           wx.ID_ANY,

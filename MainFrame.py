@@ -197,19 +197,34 @@ class Mainframe(wx.Frame):
 
     def __OnCapture(self, _evt):
         displays = []
-        display_sum_width = 0
-        display_sum_heigth = 0
+        display_pos_x_min = 0
+        display_pos_y_min = 0
+        display_pos_x_max = 0
+        display_pos_y_max = 0
         for i in range(wx.Display.GetCount()):
             display = wx.Display(i)
             displays.append(display)
-            display_sum_width += display.Geometry[2]
-            display_sum_heigth += display.Geometry[3]
+            pos_x, pos_y, width, height = display.GetGeometry()
+            display_pos_x_min = pos_x if pos_x < display_pos_x_min else display_pos_x_min
+            display_pos_y_min = pos_y if pos_y < display_pos_y_min else display_pos_y_min
+            pos_x += width
+            pos_y += height
+            display_pos_x_max = pos_x if pos_x > display_pos_x_max else display_pos_x_max
+            display_pos_y_max = pos_y if pos_y > display_pos_y_max else display_pos_y_max
+            
+        display_sum_width = display_pos_x_max - display_pos_x_min
+        display_sum_heigth = display_pos_y_max - display_pos_y_min
             
         self.Hide()
         if not self.IsShown():
             wx.MilliSleep(250)
-            screen_bitmap = self.__GetScreenBmp(wx.Size(display_sum_width, display_sum_heigth))
-            self.__grab_frame: GrabFrame = GrabFrame(self, screen_bitmap, (display_sum_width, display_sum_heigth)) # wx.GetDisplaySize())
+            screen_bitmap = self.__GetScreenBmp(
+                wx.Size(display_sum_width, display_sum_heigth),
+                wx.Point(display_pos_x_min, display_pos_y_min))
+            self.__grab_frame: GrabFrame = GrabFrame(
+                self, screen_bitmap, 
+                (display_sum_width, display_sum_heigth),
+                (display_pos_x_min, display_pos_y_min))
             self.__grab_frame.Bind(wx.EVT_SHOW, self.__OnGrabFrameHidden)
             self.__grab_frame.Bind(wx.EVT_CHAR, self.__OnChar)
         return
@@ -240,12 +255,12 @@ class Mainframe(wx.Frame):
             _evt.Skip()
         return
 
-    def __GetScreenBmp(self, _display_size : wx.Size):
+    def __GetScreenBmp(self, _display_size : wx.Size, _dispaly_pos : wx.Point):
         bmp: wx.Bitmap = wx.Bitmap(_display_size.x, _display_size.y)
         dc = wx.ScreenDC()
         memdc = wx.MemoryDC()
         memdc.SelectObject(bmp)
-        memdc.Blit(0, 0, _display_size.x, _display_size.y, dc, 0, 0)
+        memdc.Blit(0, 0, _display_size.x, _display_size.y, dc, _dispaly_pos.x, _dispaly_pos.y)
         memdc.SelectObject(wx.NullBitmap)
         return bmp
 
@@ -266,6 +281,9 @@ class Mainframe(wx.Frame):
             text += res['words']
             text += '\n'
         self.__result_text.SetValue(text)
+        wx.TheClipboard.Open()
+        wx.TheClipboard.SetData(wx.TextDataObject(text))
+        wx.TheClipboard.Close()
         return
 
     def ProcessGrabBitmap(self, _grab_bitmap: wx.Bitmap):
@@ -310,9 +328,11 @@ class Mainframe(wx.Frame):
     def __OnGrabFrameHidden(self, _evt : wx.ShowEvent):
         if not _evt.IsShown() and self.__result_bitmap:
             self.__TextRecognize(self.__result_bitmap)
+        return
 
     def __OnKeyEsc(self, evt):
         self.__grab_frame.Hide()
         if not self.__grab_frame.IsShown():
-            self.__grab_frame.Close()
             self.Show()
+            self.__grab_frame.Close()
+        return
