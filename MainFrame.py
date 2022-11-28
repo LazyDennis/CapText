@@ -16,6 +16,7 @@ class Mainframe(wx.Frame):
     __result_text: wx.TextCtrl
     __handler_map: dict
     __keymap: dict
+    __is_ext_set: bool
     
     def __init__(self, title):
         self.DEFAULT_WINDOW_SIZE = wx.Size(wx.GetDisplaySize().GetWidth() * 0.5,
@@ -40,7 +41,6 @@ class Mainframe(wx.Frame):
             wx.WXK_ESCAPE: {'handler': self.__OnKeyEsc, 'id': wx.ID_ANY}
         }
         self.__result_bitmap = None
-               
         self.__InitUi()
 
     def __InitUi(self):
@@ -272,22 +272,11 @@ class Mainframe(wx.Frame):
         temp_img = BytesIO()
         image: wx.Image = _grab_bitmap.ConvertToImage()
         image.SaveFile(temp_img, wx.BITMAP_TYPE_JPEG)
-        client = AipOcr(APP_ID, API_KEY, SECRET_KEY)
-        options = {'language_type': 'CHN_ENG', 'paragraph': True}
-        try:
-            result = client.basicGeneral(temp_img.getvalue(), options)
-        except:
-            self.__result_text.SetValue(u'网络连接失败！')            
-            return
-        print(result)
-        text = ''
-        for res in result['words_result']:
-            text += res['words']
-            text += '\n'
-        self.__result_text.SetValue(text)
-        wx.TheClipboard.Open()
-        wx.TheClipboard.SetData(wx.TextDataObject(text))
-        wx.TheClipboard.Close()
+        
+        from TextReconize import TextReconThread
+        self.__text_reco = TextReconThread(temp_img, self)
+        self.__text_reco.start()
+
         return
 
     def ProcessGrabBitmap(self, _grab_bitmap: wx.Bitmap):
@@ -326,7 +315,7 @@ class Mainframe(wx.Frame):
         return
     
     # def __CopyBitmapToClipboard(self, _data : wx.Bitmap):
-    #     wx.TheClipboard.SetData(wx.ImageDataObject(_data.ConvertToImage()))
+    #     self.__clipboard.SetData(wx.ImageDataObject(_data.ConvertToImage()))
     #     return
     
     def __OnGrabFrameHidden(self, _evt : wx.ShowEvent):
@@ -339,4 +328,8 @@ class Mainframe(wx.Frame):
         if not self.__grab_frame.IsShown():
             self.Show()
             self.__grab_frame.Close()
+        return
+    
+    def SetText(self, _text: str):
+        self.__result_text.SetValue(_text)
         return
