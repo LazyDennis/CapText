@@ -196,7 +196,7 @@ class Mainframe(wx.Frame):
         return path
 
     def __OnExit(self, _evt):
-        wx.Exit()
+        self.Close()
         return
 
     def __OnCapture(self, _evt):
