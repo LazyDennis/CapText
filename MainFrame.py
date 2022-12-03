@@ -1,29 +1,29 @@
 import wx
 from GrabFrame import GrabFrame
-from aip import AipOcr
-from api import APP_ID, API_KEY, SECRET_KEY
 from io import BytesIO
 import Util
+from threading import Thread, Lock
 
 import GlobalVars
 
 
 class Mainframe(wx.Frame):
-    __main_sizer: wx.BoxSizer    
+    __main_sizer: wx.BoxSizer
     __grab_frame: GrabFrame
     __capture_bitmap: wx.StaticBitmap
-    __result_bitmap : wx.Bitmap
+    __result_bitmap: wx.Bitmap
     __result_text: wx.TextCtrl
     __handler_map: dict
     __keymap: dict
-    __is_ext_set: bool
-    
+    __reconize_type: int
+    __text_reco: Thread
+    __status_bar_lock: Lock
+
     def __init__(self, title):
-        self.DEFAULT_WINDOW_SIZE = wx.Size(wx.GetDisplaySize().GetWidth() * 0.5,
-                                      wx.GetDisplaySize().GetHeight() * 0.5)
-        super().__init__(None,
-                         title=title,
-                         size=self.DEFAULT_WINDOW_SIZE)
+        self.DEFAULT_WINDOW_SIZE = wx.Size(
+            wx.GetDisplaySize().GetWidth() * 0.5,
+            wx.GetDisplaySize().GetHeight() * 0.5)
+        super().__init__(None, title=title, size=self.DEFAULT_WINDOW_SIZE)
         self.__handler_map = {
             '__OnNew': self.__OnNew,
             '__OnOpenImage': self.__OnOpenImage,
@@ -38,62 +38,78 @@ class Mainframe(wx.Frame):
         }
 
         self.__keymap = {
-            wx.WXK_ESCAPE: {'handler': self.__OnKeyEsc, 'id': wx.ID_ANY}
+            wx.WXK_ESCAPE: {
+                'handler': self.__OnKeyEsc,
+                'id': wx.ID_ANY
+            }
         }
         self.__result_bitmap = None
+        self.__reconize_type = GlobalVars.RECONIZE_TYPE['百度']
         self.__InitUi()
+        self.__text_reco = None
+        self.__status_bar_lock = Lock()
 
     def __InitUi(self):
         # self.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
         # self.SetForegroundColour('#FF0000')
         icon_bundle = wx.IconBundle()
-        icon_bundle.AddIcon(wx.Icon(Util.GetIcon(
-            'frame_icon_large', GlobalVars.ICON_SETTING['frame_icon_large'])))
-        icon_bundle.AddIcon(wx.Icon(Util.GetIcon(
-            'frame_icon_small', GlobalVars.ICON_SETTING['frame_icon_small'])))
-        
+        icon_bundle.AddIcon(
+            wx.Icon(
+                Util.GetIcon('frame_icon_large',
+                             GlobalVars.ICON_SETTING['frame_icon_large'])))
+        icon_bundle.AddIcon(
+            wx.Icon(
+                Util.GetIcon('frame_icon_small',
+                             GlobalVars.ICON_SETTING['frame_icon_small'])))
+
         self.SetIcons(icon_bundle)
         self.__menu_bar = self.__InitMenu()
         self.__toolbar = self.__InitToolBar()
         self.__main_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        
+
         self.__main_sizer.Add(self.__InitCapturePanel(), 1, wx.EXPAND)
         self.__main_sizer.Add(self.__InitRecognizeResPanel(), 1, wx.EXPAND)
 
         self.SetSizer(self.__main_sizer)
         self.__status_bar: wx.StatusBar = self.CreateStatusBar()
-        
+
         # color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
         # self.__menu_bar.SetBackgroundColour(color)
         # self.__toolbar.SetBackgroundColour(color)
         # self.SetBackgroundColour(color)
         # self.__status_bar.SetBackgroundColour(color)
 
-        self.Bind(wx.EVT_SIZE, self.__OnResize)        
+        self.Bind(wx.EVT_SIZE, self.__OnResize)
 
     def __InitMenu(self):
         menu_bar = wx.MenuBar()
 
         for menu_info in GlobalVars.MENUS:
-            menu = wx.Menu()
-            for item in menu_info['menu_items']:
-                menu_item = wx.MenuItem(**item['property'])
-                if 'icon' in item and item['icon']:
-                    menu_item.SetBitmap(
-                        Util.GetIcon(item['icon'],
-                                     GlobalVars.ICON_SETTING['menu_icon']))
-                menu.Append(menu_item)
-                if 'handler' in item and item['handler']:
-                    handler = self.__handler_map[item['handler']]
-                    self.Bind(wx.EVT_MENU, handler, id=item['property']['id'])
-                    lastchar = item['property']['text'][-1::]
-                    if ord(lastchar) >= ord('A') and ord(lastchar) <= ord('Z'):
-                        self.__keymap[ord(lastchar) - ord('A') + 1] = {
-                            'handler': handler,
-                            'id': item['property']['id']
-                        }
-            menu_bar.Append(menu, menu_info['title'])
-        
+            if menu_info['show_on_screen']:
+                menu = wx.Menu()
+                for item in menu_info['menu_items']:
+                    if item['show_on_screen']:
+                        menu_item = wx.MenuItem(**item['property'])
+                        if 'icon' in item and item['icon']:
+                            menu_item.SetBitmap(
+                                Util.GetIcon(
+                                    item['icon'],
+                                    GlobalVars.ICON_SETTING['menu_icon']))
+                        menu.Append(menu_item)
+                        if 'handler' in item and item['handler']:
+                            handler = self.__handler_map[item['handler']]
+                            self.Bind(wx.EVT_MENU,
+                                      handler,
+                                      id=item['property']['id'])
+                            lastchar = item['property']['text'][-1::]
+                            if ord(lastchar) >= ord('A') and ord(
+                                    lastchar) <= ord('Z'):
+                                self.__keymap[ord(lastchar) - ord('A') + 1] = {
+                                    'handler': handler,
+                                    'id': item['property']['id']
+                                }
+                menu_bar.Append(menu, menu_info['title'])
+
         self.SetMenuBar(menu_bar)
 
         return menu_bar
@@ -101,29 +117,33 @@ class Mainframe(wx.Frame):
     def __InitToolBar(self):
         toolbar: wx.ToolBar = self.CreateToolBar(wx.TB_FLAT | wx.TB_HORIZONTAL
                                                  | wx.TB_TEXT)
+        tool_pos = 0
         for menu in GlobalVars.MENUS:
-            for item in menu['menu_items']:
-                if 'toolbartool' in item and item['toolbartool']:
-                    if 'icon' in item and item['icon']:
-                        icon_bmp = Util.GetIcon(
-                            item['icon'], GlobalVars.ICON_SETTING['toolbar_icon'])
-                    label_text: str = item['property']['text']
-                    label: str = ''
-                    help_string = item['property']['helpString']
-                    pos = label_text.find('CTRL')
-                    if ~pos:
-                        label = label_text[:pos:]
-                        shortcut_key = label_text[pos::]
-                        pos = shortcut_key.find('&')
-                        shortcut_key = shortcut_key[:pos:] + shortcut_key[pos +
-                                                                          1::]
-                        help_string += '(' + shortcut_key + ')'
-                    toolbar.AddTool(item['property']['id'], label, icon_bmp,
-                                    wx.NullBitmap, wx.ITEM_NORMAL, help_string,
-                                    help_string)
-            if GlobalVars.MENUS.index(menu) < len(GlobalVars.MENUS) - 1:
+            if menu['show_on_screen']:
+                for item in menu['menu_items']:
+                    if item['show_on_screen'] and 'toolbartool' in item and item[
+                            'toolbartool']:
+                        if 'icon' in item and item['icon']:
+                            icon_bmp = Util.GetIcon(
+                                item['icon'],
+                                GlobalVars.ICON_SETTING['toolbar_icon'])
+                        label_text: str = item['property']['text']
+                        label: str = ''
+                        help_string = item['property']['helpString']
+                        pos = label_text.find('CTRL')
+                        if ~pos:
+                            label = label_text[:pos:]
+                            shortcut_key = label_text[pos::]
+                            pos = shortcut_key.find('&')
+                            shortcut_key = shortcut_key[:pos:] + shortcut_key[
+                                pos + 1::]
+                            help_string += '(' + shortcut_key + ')'
+                        toolbar.AddTool(item['property']['id'], label,
+                                        icon_bmp, wx.NullBitmap,
+                                        wx.ITEM_NORMAL, help_string,
+                                        help_string)
                 toolbar.AddSeparator()
-
+        
         toolbar.Realize()
 
         return toolbar
@@ -155,13 +175,13 @@ class Mainframe(wx.Frame):
                 self.__result_bitmap = wx.Bitmap(open_image)
                 self.__SetCaptureBitmap(open_image)
             except:
-                wx.MessageBox(u'打开图片文件失败！', u'错误', style= wx.OK | wx.CENTER | wx.ICON_ERROR)
-                # return
+                wx.MessageBox(u'打开图片文件失败！',
+                              u'错误',
+                              style=wx.OK | wx.CENTER | wx.ICON_ERROR)
         return
 
     def __OnSaveCapture(self, _evt: wx.Event):
         id = _evt.GetId()
-        # bitmap: wx.Bitmap = self.__capture_bitmap.GetBitmap()
         if self.__result_bitmap and self.__result_bitmap != wx.NullBitmap:
             path: str = self.__OpenDialog(id)
             if path:
@@ -169,11 +189,12 @@ class Mainframe(wx.Frame):
                 if bitmap_type not in GlobalVars.BITMAP_TYPE_MAP:
                     bitmap_type = 'jpg'
                     path += '.' + bitmap_type
-            self.__result_bitmap.SaveFile(path, GlobalVars.BITMAP_TYPE_MAP[bitmap_type])
+            self.__result_bitmap.SaveFile(
+                path, GlobalVars.BITMAP_TYPE_MAP[bitmap_type])
         else:
             item = Util.GetMenuById(id)
             wx.MessageBox(u'没有可保存的截图！', item['property']['helpString'],
-                        wx.OK | wx.CENTER | wx.ICON_INFORMATION)
+                          wx.OK | wx.CENTER | wx.ICON_INFORMATION)
 
         return
 
@@ -215,10 +236,16 @@ class Mainframe(wx.Frame):
             pos_y += height
             display_pos_x_max = pos_x if pos_x > display_pos_x_max else display_pos_x_max
             display_pos_y_max = pos_y if pos_y > display_pos_y_max else display_pos_y_max
-            
+
         display_sum_width = display_pos_x_max - display_pos_x_min
         display_sum_heigth = display_pos_y_max - display_pos_y_min
-            
+
+        '''For debugging'''
+        # display_pos_x_min = 0
+        # display_pos_y_min = 0
+        # display_sum_width, display_sum_heigth = wx.GetDisplaySize()
+        '''For debugging'''
+
         self.Hide()
         if not self.IsShown():
             wx.MilliSleep(250)
@@ -226,8 +253,7 @@ class Mainframe(wx.Frame):
                 wx.Size(display_sum_width, display_sum_heigth),
                 wx.Point(display_pos_x_min, display_pos_y_min))
             self.__grab_frame: GrabFrame = GrabFrame(
-                self, screen_bitmap, 
-                (display_sum_width, display_sum_heigth),
+                self, screen_bitmap, (display_sum_width, display_sum_heigth),
                 (display_pos_x_min, display_pos_y_min))
             self.__grab_frame.Bind(wx.EVT_SHOW, self.__OnGrabFrameHidden)
             self.__grab_frame.Bind(wx.EVT_CHAR, self.__OnChar)
@@ -259,12 +285,13 @@ class Mainframe(wx.Frame):
             _evt.Skip()
         return
 
-    def __GetScreenBmp(self, _display_size : wx.Size, _dispaly_pos : wx.Point):
+    def __GetScreenBmp(self, _display_size: wx.Size, _dispaly_pos: wx.Point):
         bmp: wx.Bitmap = wx.Bitmap(_display_size.x, _display_size.y)
         dc = wx.ScreenDC()
         memdc = wx.MemoryDC()
         memdc.SelectObject(bmp)
-        memdc.Blit(0, 0, _display_size.x, _display_size.y, dc, _dispaly_pos.x, _dispaly_pos.y)
+        memdc.Blit(0, 0, _display_size.x, _display_size.y, dc, _dispaly_pos.x,
+                   _dispaly_pos.y)
         memdc.SelectObject(wx.NullBitmap)
         return bmp
 
@@ -272,10 +299,20 @@ class Mainframe(wx.Frame):
         temp_img = BytesIO()
         image: wx.Image = _grab_bitmap.ConvertToImage()
         image.SaveFile(temp_img, wx.BITMAP_TYPE_JPEG)
-        
-        from TextReconize import TextReconThread
-        self.__text_reco = TextReconThread(temp_img, self)
+
+        from GlobalVars import RECONIZE_METHOD
+        self.__text_reco = TextReconizeThread(
+            temp_img, self, **RECONIZE_METHOD[self.__reconize_type])
         self.__text_reco.start()
+        dots = '...'
+        while self.__text_reco.IsReconizing():
+            self.__status_bar_lock.acquire()
+            self.__status_bar.SetStatusText(u'识别中' + dots)
+            self.__status_bar_lock.release()
+            dots += '.'
+            if len(dots) == 3:
+                dots = '.'
+            wx.MilliSleep(100)
 
         return
 
@@ -287,8 +324,8 @@ class Mainframe(wx.Frame):
             self.__SetCaptureBitmap(_grab_bitmap)
         self.__grab_frame.Close()
         return
-    
-    def __SetCaptureBitmap(self, _bitmap : wx.Bitmap):
+
+    def __SetCaptureBitmap(self, _bitmap: wx.Bitmap):
         ctrl_width, ctrl_height = self.__capture_bitmap.GetSize()
         bitmap_width, bitmap_height = _bitmap.GetSize()
         ctrl_ratio = ctrl_width / ctrl_height
@@ -303,22 +340,23 @@ class Mainframe(wx.Frame):
         self.__capture_bitmap.SetBitmap(_bitmap)
         self.Layout()
         return
-    
-    def __OnResize(self, _evt : wx.SizeEvent):
-        frame_width, frame_height = _evt.GetSize()        
-        self.__capture_bitmap.SetSize(frame_width / 2, 
-                                self.__capture_bitmap.GetSize().GetHeight())
+
+    def __OnResize(self, _evt: wx.SizeEvent):
+        frame_width, frame_height = _evt.GetSize()
+        self.__capture_bitmap.SetSize(
+            frame_width / 2,
+            self.__capture_bitmap.GetSize().GetHeight())
         if self.__result_bitmap:
             self.__SetCaptureBitmap(wx.Bitmap(self.__result_bitmap))
 
         _evt.Skip()
         return
-    
+
     # def __CopyBitmapToClipboard(self, _data : wx.Bitmap):
     #     self.__clipboard.SetData(wx.ImageDataObject(_data.ConvertToImage()))
     #     return
-    
-    def __OnGrabFrameHidden(self, _evt : wx.ShowEvent):
+
+    def __OnGrabFrameHidden(self, _evt: wx.ShowEvent):
         if not _evt.IsShown() and self.__result_bitmap:
             self.__TextRecognize(self.__result_bitmap)
         return
@@ -329,7 +367,46 @@ class Mainframe(wx.Frame):
             self.Show()
             self.__grab_frame.Close()
         return
-    
+
     def SetText(self, _text: str):
         self.__result_text.SetValue(_text)
         return
+
+    def SetStatusText(self, _text: str):
+        self.__status_bar.SetStatusText(_text)
+        return
+
+    def GetStatusLock(self):
+        return self.__status_bar_lock
+
+
+class TextReconizeThread(Thread):
+
+    def __init__(self, _image_stream, _main_frame: Mainframe, _reconize_method,
+                 _args) -> None:
+        super().__init__()
+        self.__image_stream = _image_stream
+        self.__result_text = ''
+        self.__main_frame = _main_frame
+        self.__args = _args
+        self.__reconize_method = _reconize_method
+        self.__is_reconizing = False
+
+    def run(self) -> None:
+        self.__is_reconizing = True
+        self.__result_text = self.__reconize_method(
+            self.__image_stream.getvalue(), **self.__args)
+        self.__is_reconizing = False
+        self.__main_frame.SetText(str(self.__result_text))
+        lock = self.__main_frame.GetStatusLock()
+        if not lock.locked():
+            lock.acquire()
+            self.__main_frame.SetStatusText(u"  识别完成！")
+            lock.release()
+        return
+
+    def GetResult(self):
+        return self.__result_text
+
+    def IsReconizing(self):
+        return self.__is_reconizing

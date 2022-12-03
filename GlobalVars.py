@@ -1,4 +1,6 @@
 import wx
+import TextReconize
+import api
 
 ICON_SETTING = {
     'frame_icon_large': (32, 32),
@@ -10,6 +12,7 @@ ICON_SETTING = {
 MENUS = [
     {
         'title': u'文件(&F)',
+        'show_on_screen': True,
         'menu_items':
         [
             {
@@ -20,6 +23,7 @@ MENUS = [
                     'helpString': u'新建截图',
                     'kind': wx.ITEM_NORMAL
                 },
+                'show_on_screen': True,
                 'icon': u'创建_newlybuild.png',
                 'handler': '__OnNew',
                 'toolbartool': True
@@ -32,6 +36,7 @@ MENUS = [
                     'helpString': u'打开已有图片',
                     'kind': wx.ITEM_NORMAL
                 },
+                'show_on_screen': True,
                 'icon': u'图片文件_image-files.png',
                 'handler': '__OnOpenImage',
                 'toolbartool': True,
@@ -50,6 +55,7 @@ MENUS = [
                     'helpString': u'保存当前截图',
                     'kind': wx.ITEM_NORMAL
                 },
+                'show_on_screen': True,
                 'icon': u'图片下载_down-picture.png',
                 'handler': '__OnSaveCapture',
                 'toolbartool': True,
@@ -72,6 +78,7 @@ MENUS = [
                     'helpString': u'保存识别文本',
                     'kind': wx.ITEM_NORMAL
                 },
+                'show_on_screen': True,
                 'icon': u'文本文件_file-text.png',
                 'handler': '__OnSaveText',
                 'toolbartool': True,
@@ -86,7 +93,8 @@ MENUS = [
                 'property':
                 {
                     'id': wx.ID_SEPARATOR
-                }
+                },
+                'show_on_screen': True,
             },
             {
                 'property':
@@ -96,6 +104,7 @@ MENUS = [
                     'helpString': u'退出程序',
                     'kind': wx.ITEM_NORMAL
                 },
+                'show_on_screen': True,
                 'icon': u'退出_logout.png',
                 'handler': '__OnExit',
                 'toolbartool': True
@@ -104,6 +113,7 @@ MENUS = [
     },
     {
         'title': u'动作(&A)',
+        'show_on_screen': True,
         'menu_items':
         [  
             {
@@ -114,6 +124,7 @@ MENUS = [
                     'helpString': u'获取截图',
                     'kind': wx.ITEM_NORMAL
                 },
+                'show_on_screen': True,
                 'icon': u'截图_screenshot-one.png',
                 'handler': '__OnCapture',
                 'toolbartool': True
@@ -126,6 +137,7 @@ MENUS = [
                     'helpString': u'识别当前截图',
                     'kind': wx.ITEM_NORMAL
                 },
+                'show_on_screen': True,
                 'icon': u'文字识别_text-recognition.png',
                 'handler': '__OnRecognize',
                 'toolbartool': True
@@ -134,7 +146,8 @@ MENUS = [
                 'property':
                 {
                     'id': wx.ID_SEPARATOR
-                }
+                },
+                'show_on_screen': True,
             },
             {
                 'property':
@@ -144,6 +157,7 @@ MENUS = [
                     'helpString': u'变更设定',
                     'kind': wx.ITEM_NORMAL
                 },
+                'show_on_screen': False,
                 'icon': u'设置_setting-two.png',
                 'handler': '__OnSetting',
                 'toolbartool': True
@@ -152,6 +166,7 @@ MENUS = [
     },
     {
         'title': u'帮助(&H)',
+        'show_on_screen': False,
         'menu_items':
         [  
             {
@@ -162,6 +177,7 @@ MENUS = [
                     'helpString': u'获取帮助',
                     'kind': wx.ITEM_NORMAL
                 },
+                'show_on_screen': True,
                 'icon': u'帮助_help.png',
                 'handler': '__OnHelp',
                 'toolbartool': True
@@ -174,6 +190,7 @@ MENUS = [
                     'helpString': u'关于',
                     'kind': wx.ITEM_NORMAL
                 },
+                'show_on_screen': True,
                 'icon': u'信息_info.png',
                 'handler': '__OnAbout',
                 'toolbartool': False
@@ -188,4 +205,23 @@ BITMAP_TYPE_MAP ={
     'gif' : wx.BITMAP_TYPE_GIF,
     'tif' : wx.BITMAP_TYPE_TIF,
     'png' : wx.BITMAP_TYPE_PNG
+}
+
+RECONIZE_TYPE = {
+    '百度' : 1
+}
+
+RECONIZE_METHOD = {
+    1: {
+        '_reconize_method': TextReconize.BaiduOcr,
+        '_args': {
+            '_appid': api.APP_ID,
+            '_apikey':  api.API_KEY,
+            '_secretkey':  api.SECRET_KEY,
+            '_options': {
+                'language_type': 'CHN_ENG',
+                'paragraph': True
+            }
+        }
+    }
 }
