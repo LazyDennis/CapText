@@ -19,6 +19,7 @@ class Mainframe(wx.Frame):
     __text_reco: Thread
     __status_bar_lock: Lock
     __reconize_method: dict
+    __language_type: str
 
     def __init__(self, title):
         self.DEFAULT_WINDOW_SIZE = wx.Size(
@@ -46,10 +47,11 @@ class Mainframe(wx.Frame):
         }
         self.__result_bitmap = None
         self.__reconize_type = GlobalVars.RECONIZE_TYPE['百度']
-        self.__InitUi()
         self.__text_reco = None
         self.__status_bar_lock = Lock()
         self.__reconize_method = None
+        self.__language_type = GlobalVars.RECONIZE_LANGUAGE[u'中英混合（默认）']
+        self.__InitUi()
 
     def __InitUi(self):
         # self.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
@@ -72,9 +74,9 @@ class Mainframe(wx.Frame):
         self.__main_sizer.Add(self.__InitCapturePanel(), 1, wx.EXPAND)
         self.__main_sizer.Add(self.__InitRecognizeResPanel(), 1, wx.EXPAND)
 
+        self.__status_bar = self.__InitStatusBar()
+        
         self.SetSizer(self.__main_sizer)
-        self.__status_bar: wx.StatusBar = self.CreateStatusBar()
-
         # color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
         # self.__menu_bar.SetBackgroundColour(color)
         # self.__toolbar.SetBackgroundColour(color)
@@ -119,7 +121,6 @@ class Mainframe(wx.Frame):
     def __InitToolBar(self):
         toolbar: wx.ToolBar = self.CreateToolBar(wx.TB_FLAT | wx.TB_HORIZONTAL
                                                  | wx.TB_TEXT)
-        tool_pos = 0
         for menu in GlobalVars.MENUS:
             if menu['show_on_screen']:
                 for item in menu['menu_items']:
@@ -159,6 +160,18 @@ class Mainframe(wx.Frame):
                                          style=wx.TE_MULTILINE | wx.TE_LEFT)
         self.__result_text.Bind(wx.EVT_CHAR, self.__OnChar)
         return self.__result_text
+    
+    def __InitStatusBar(self):
+        status_bar : wx.StatusBar = self.CreateStatusBar()
+        status_bar.SetFieldsCount(2, [-1, 250])
+        status_text = u'当前识别语言：'
+        for key, val in GlobalVars.RECONIZE_LANGUAGE.items():
+            if val == self.__language_type:
+                status_text += key
+                break
+        status_bar.SetStatusText(status_text, 1)
+        
+        return status_bar
 
     def __OnNew(self, _evt):
         self.SetSize(self.DEFAULT_WINDOW_SIZE)
@@ -266,9 +279,17 @@ class Mainframe(wx.Frame):
         return
 
     def __OnSetting(self, _evt):
-        self.__setting_dialog = SettingDialog(self)
-        self.__setting_dialog.ShowModal()
-        self.__setting_dialog.Close()
+        self.__setting_dialog = SettingDialog(self, (200, -1), self.__language_type)
+        if self.__setting_dialog.ShowModal() == wx.ID_OK:
+            self.__language_type = self.__setting_dialog.GetLanguageType()
+            status_text = u'当前识别语言：'
+            for key, val in GlobalVars.RECONIZE_LANGUAGE.items():
+                if val == self.__language_type:
+                    status_text += key
+                    break
+            self.__status_bar.SetStatusText(status_text, 1)
+        self.__setting_dialog.Close()       
+        
         return
 
     def __OnHelp(self, _evt):
@@ -305,14 +326,19 @@ class Mainframe(wx.Frame):
 
         from GlobalVars import RECONIZE_METHOD
         if self.__reconize_method is None:
-            self.__reconize_method = RECONIZE_METHOD[self.__reconize_type]
+            self.__reconize_method = RECONIZE_METHOD[
+                self.__reconize_type].copy()
+        if self.__language_type:
+            self.__reconize_method['_args']['_options'][
+                'language_type'] = self.__language_type
+
         self.__text_reco = TextReconizeThread(temp_img, self,
                                               **self.__reconize_method)
         self.__text_reco.start()
         dots = '...'
         while self.__text_reco.IsReconizing():
             self.__status_bar_lock.acquire()
-            self.__status_bar.SetStatusText(u'识别中' + dots)
+            self.__status_bar.SetStatusText(u'识别中' + dots, 0)
             self.__status_bar_lock.release()
             dots += '.'
             if len(dots) == 3:
@@ -378,7 +404,7 @@ class Mainframe(wx.Frame):
         return
 
     def SetStatusText(self, _text: str):
-        self.__status_bar.SetStatusText(_text)
+        self.__status_bar.SetStatusText(_text, 0)
         return
 
     def GetStatusLock(self):
@@ -421,8 +447,9 @@ class SettingDialog(wx.Dialog):
     __main_sizer: wx.BoxSizer
     __language_type: str
 
-    def __init__(self, _parent):
-        super().__init__(_parent, wx.ID_ANY, u'设置')
+    def __init__(self, _parent, _size=wx.DefaultSize, _curr_lang_type=None):
+        super().__init__(_parent, wx.ID_ANY, u'设置', size=_size)
+        self.__curr_lang_type = _curr_lang_type
         self.__InitUI()
 
         return
@@ -430,28 +457,54 @@ class SettingDialog(wx.Dialog):
     def __InitUI(self):
         self.__main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.__lang_type_sel = self.__InitLanguageTypeSelection()
+        self.__InitDialogButton()
         self.SetSizer(self.__main_sizer)
+        self.Fit()
         return
 
     def __InitLanguageTypeSelection(self):
+        BORDER = 5
+        lang_type_label = wx.StaticText(self, wx.ID_ANY, u'识别语言')
         lang_type_sel = wx.ComboBox(self,
                                     wx.ID_ANY,
                                     wx.EmptyString,
                                     style=wx.CB_DROPDOWN
                                     | wx.CB_READONLY)
+        i = 0
+        select_index = 0
         for key, value in GlobalVars.RECONIZE_LANGUAGE.items():
             lang_type_sel.Append(key, value)
-        lang_type_sel.SetSelection(0)
-        self.__language_type = lang_type_sel.GetClientData(0)
+            if self.__curr_lang_type:
+                if self.__curr_lang_type == value:
+                    select_index = i
+            i += 1
+
+        lang_type_sel.SetSelection(select_index)
+        self.__language_type = lang_type_sel.GetClientData(select_index)
         lang_type_sel.Bind(wx.EVT_COMBOBOX, self.__OnLanguageTypeSelect)
 
+        lang_type_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        lang_type_sizer.Add(lang_type_label, 0, wx.ALIGN_CENTER | wx.ALL, BORDER)
+        lang_type_sizer.Add(lang_type_sel, 1, wx.EXPAND | wx.ALL, BORDER)
+        self.__main_sizer.Add(lang_type_sizer, 0, wx.ALIGN_CENTER)
         return lang_type_sel
+    
+    def __InitDialogButton(self):
+        dialog_button_line = wx.StaticLine(self, wx.ID_ANY)
+        dialog_button_sizer = wx.StdDialogButtonSizer()
+        button_ok = wx.Button(self, wx.ID_OK, u'确定')
+        button_cancel = wx.Button(self, wx.ID_CANCEL, u'取消')
+        dialog_button_sizer.AddButton(button_ok)
+        dialog_button_sizer.AddButton(button_cancel)
+        dialog_button_sizer.Realize()
+        self.__main_sizer.Add(dialog_button_line, 0, wx.ALIGN_CENTER)
+        self.__main_sizer.Add(dialog_button_sizer, 0, wx.ALIGN_CENTER)
+        return
 
     def __OnLanguageTypeSelect(self, _evt: wx.CommandEvent):
         self.__language_type = self.__lang_type_sel.GetClientData(
             _evt.GetSelection())
         return
 
-
-    def GetLanguageType(self)->str:
+    def GetLanguageType(self) -> str:
         return self.__language_type
