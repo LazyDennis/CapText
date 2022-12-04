@@ -157,7 +157,7 @@ MENUS = [
                     'helpString': u'变更设定',
                     'kind': wx.ITEM_NORMAL
                 },
-                'show_on_screen': False,
+                'show_on_screen': True,
                 'icon': u'设置_setting-two.png',
                 'handler': '__OnSetting',
                 'toolbartool': True
@@ -205,6 +205,11 @@ BITMAP_TYPE_MAP ={
     'gif' : wx.BITMAP_TYPE_GIF,
     'tif' : wx.BITMAP_TYPE_TIF,
     'png' : wx.BITMAP_TYPE_PNG
+}
+
+RECONIZE_LANGUAGE = {
+    '中英混合（默认）': 'CHN_ENG',
+    '日文': 'JAP'
 }
 
 RECONIZE_TYPE = {

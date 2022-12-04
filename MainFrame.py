@@ -18,6 +18,7 @@ class Mainframe(wx.Frame):
     __reconize_type: int
     __text_reco: Thread
     __status_bar_lock: Lock
+    __reconize_method: dict
 
     def __init__(self, title):
         self.DEFAULT_WINDOW_SIZE = wx.Size(
@@ -48,6 +49,7 @@ class Mainframe(wx.Frame):
         self.__InitUi()
         self.__text_reco = None
         self.__status_bar_lock = Lock()
+        self.__reconize_method = None
 
     def __InitUi(self):
         # self.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
@@ -143,7 +145,7 @@ class Mainframe(wx.Frame):
                                         wx.ITEM_NORMAL, help_string,
                                         help_string)
                 toolbar.AddSeparator()
-        
+
         toolbar.Realize()
 
         return toolbar
@@ -239,7 +241,6 @@ class Mainframe(wx.Frame):
 
         display_sum_width = display_pos_x_max - display_pos_x_min
         display_sum_heigth = display_pos_y_max - display_pos_y_min
-
         '''For debugging'''
         # display_pos_x_min = 0
         # display_pos_y_min = 0
@@ -265,7 +266,9 @@ class Mainframe(wx.Frame):
         return
 
     def __OnSetting(self, _evt):
-
+        self.__setting_dialog = SettingDialog(self)
+        self.__setting_dialog.ShowModal()
+        self.__setting_dialog.Close()
         return
 
     def __OnHelp(self, _evt):
@@ -301,8 +304,10 @@ class Mainframe(wx.Frame):
         image.SaveFile(temp_img, wx.BITMAP_TYPE_JPEG)
 
         from GlobalVars import RECONIZE_METHOD
-        self.__text_reco = TextReconizeThread(
-            temp_img, self, **RECONIZE_METHOD[self.__reconize_type])
+        if self.__reconize_method is None:
+            self.__reconize_method = RECONIZE_METHOD[self.__reconize_type]
+        self.__text_reco = TextReconizeThread(temp_img, self,
+                                              **self.__reconize_method)
         self.__text_reco.start()
         dots = '...'
         while self.__text_reco.IsReconizing():
@@ -410,3 +415,43 @@ class TextReconizeThread(Thread):
 
     def IsReconizing(self):
         return self.__is_reconizing
+
+
+class SettingDialog(wx.Dialog):
+    __main_sizer: wx.BoxSizer
+    __language_type: str
+
+    def __init__(self, _parent):
+        super().__init__(_parent, wx.ID_ANY, u'设置')
+        self.__InitUI()
+
+        return
+
+    def __InitUI(self):
+        self.__main_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.__lang_type_sel = self.__InitLanguageTypeSelection()
+        self.SetSizer(self.__main_sizer)
+        return
+
+    def __InitLanguageTypeSelection(self):
+        lang_type_sel = wx.ComboBox(self,
+                                    wx.ID_ANY,
+                                    wx.EmptyString,
+                                    style=wx.CB_DROPDOWN
+                                    | wx.CB_READONLY)
+        for key, value in GlobalVars.RECONIZE_LANGUAGE.items():
+            lang_type_sel.Append(key, value)
+        lang_type_sel.SetSelection(0)
+        self.__language_type = lang_type_sel.GetClientData(0)
+        lang_type_sel.Bind(wx.EVT_COMBOBOX, self.__OnLanguageTypeSelect)
+
+        return lang_type_sel
+
+    def __OnLanguageTypeSelect(self, _evt: wx.CommandEvent):
+        self.__language_type = self.__lang_type_sel.GetClientData(
+            _evt.GetSelection())
+        return
+
+
+    def GetLanguageType(self)->str:
+        return self.__language_type
