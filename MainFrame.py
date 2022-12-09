@@ -279,7 +279,7 @@ class Mainframe(wx.Frame):
         return
 
     def __OnSetting(self, _evt):
-        self.__setting_dialog = SettingDialog(self, (200, -1), self.__language_type)
+        self.__setting_dialog = SettingDialog(self, (300, -1), self.__language_type)
         if self.__setting_dialog.ShowModal() == wx.ID_OK:
             self.__language_type = self.__setting_dialog.GetLanguageType()
             status_text = u'当前识别语言：'
@@ -457,9 +457,10 @@ class SettingDialog(wx.Dialog):
     def __InitUI(self):
         self.__main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.__lang_type_sel = self.__InitLanguageTypeSelection()
+        self.__main_sizer.AddStretchSpacer(1)
         self.__InitDialogButton()
         self.SetSizer(self.__main_sizer)
-        self.Fit()
+        # self.Fit()
         return
 
     def __InitLanguageTypeSelection(self):
@@ -490,6 +491,7 @@ class SettingDialog(wx.Dialog):
         return lang_type_sel
     
     def __InitDialogButton(self):
+        BORDER = 5
         dialog_button_line = wx.StaticLine(self, wx.ID_ANY)
         dialog_button_sizer = wx.StdDialogButtonSizer()
         button_ok = wx.Button(self, wx.ID_OK, u'确定')
@@ -497,8 +499,8 @@ class SettingDialog(wx.Dialog):
         dialog_button_sizer.AddButton(button_ok)
         dialog_button_sizer.AddButton(button_cancel)
         dialog_button_sizer.Realize()
-        self.__main_sizer.Add(dialog_button_line, 0, wx.ALIGN_CENTER)
-        self.__main_sizer.Add(dialog_button_sizer, 0, wx.ALIGN_CENTER)
+        self.__main_sizer.Add(dialog_button_line, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, BORDER)
+        self.__main_sizer.Add(dialog_button_sizer, 0, wx.ALIGN_CENTER | wx.ALL, BORDER)
         return
 
     def __OnLanguageTypeSelect(self, _evt: wx.CommandEvent):

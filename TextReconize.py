@@ -8,7 +8,7 @@ def BaiduOcr(_img, _appid='', _apikey='', _secretkey='', _options=None) -> str:
 
     result_text = ''
     try:
-        result = client.general(_img, _options)
+        result = client.basicGeneral(_img, _options)
         print(result)
         if 'words_result' in result:
             for res in result['words_result']:

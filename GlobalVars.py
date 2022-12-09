@@ -2,6 +2,11 @@ import wx
 import TextReconize
 import api
 
+MAIN_VERSION = 1
+SUB_VERSION = 1
+MINOR_VERSION = 0
+VERSION = str(MAIN_VERSION) + '.' + str(SUB_VERSION) + '.' + str(MINOR_VERSION)
+
 ICON_SETTING = {
     'frame_icon_large': (32, 32),
     'frame_icon_small': (16, 16),
