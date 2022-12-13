@@ -125,7 +125,7 @@ MENUS = [
                 'property':
                 {
                     'id': 110,
-                    'text': u'截图\tCTRL+&K',
+                    'text': u'截图\tCTRL+&W',
                     'helpString': u'获取截图',
                     'kind': wx.ITEM_NORMAL
                 },
