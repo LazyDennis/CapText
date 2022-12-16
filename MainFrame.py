@@ -52,7 +52,7 @@ class Mainframe(wx.Frame):
         self.__text_reco = None
         self.__status_bar_lock = Lock()
         self.__reconize_method = None
-        self.__language_type = GlobalVars.RECONIZE_LANGUAGE[u'中英混合（默认）']
+        # self.__language_type = GlobalVars.RECONIZE_LANGUAGE[u'中英混合（默认）']
         self.__setting = {}
         self.__setting['language_type'] = GlobalVars.RECONIZE_LANGUAGE[u'中英混合（默认）']
         self.__InitUi()
@@ -89,6 +89,7 @@ class Mainframe(wx.Frame):
         # self.SetBackgroundColour(color)
         # self.__status_bar.SetBackgroundColour(color)
 
+        self.__ApplySetting()
         self.Bind(wx.EVT_SIZE, self.__OnResize)
         self.Bind(wx.EVT_CLOSE, self.__OnClose)
         self.Bind(wx.EVT_ICONIZE, self.__OnIconize)
@@ -172,12 +173,13 @@ class Mainframe(wx.Frame):
     def __InitStatusBar(self):
         status_bar : wx.StatusBar = self.CreateStatusBar()
         status_bar.SetFieldsCount(2, [-1, 250])
-        status_text = u'当前识别语言：'
-        for key, val in GlobalVars.RECONIZE_LANGUAGE.items():
-            if val == self.__language_type:
-                status_text += key
-                break
-        status_bar.SetStatusText(status_text, 1)
+        
+        # status_text = u'当前识别语言：'
+        # for key, val in GlobalVars.RECONIZE_LANGUAGE.items():
+        #     if val == self.__language_type:
+        #         status_text += key
+        #         break
+        # status_bar.SetStatusText(status_text, 1)
         
         return status_bar
 
@@ -290,16 +292,11 @@ class Mainframe(wx.Frame):
         self.__setting_dialog = SettingDialog(self, self.__setting, (300, -1))
         if self.__setting_dialog.ShowModal() == wx.ID_OK:
             self.__setting = self.__setting_dialog.GetSetting()
-            status_text = u'当前识别语言：'
-            for key, val in GlobalVars.RECONIZE_LANGUAGE.items():
-                if val == self.__setting['language_type']:
-                    status_text += key
-                    break
-            self.__status_bar.SetStatusText(status_text, 1)
-        self.__setting_dialog.Close()       
+            self.__ApplySetting()
+        self.__setting_dialog.Close()
         
         return
-
+    
     def __OnHelp(self, _evt):
 
         return
@@ -429,6 +426,38 @@ class Mainframe(wx.Frame):
             self.Iconize(True)
             self.Hide()
 
+        return
+
+    def __ApplySetting(self):
+        self.__SetStatusBarText()
+        self.__SetHotkey()
+        return
+
+    def __SetStatusBarText(self):
+        status_text = u'当前识别语言：'
+        for key, val in GlobalVars.RECONIZE_LANGUAGE.items():
+            if val == self.__setting['language_type']:
+                status_text += key
+                break
+        self.__status_bar.SetStatusText(status_text, 1)
+        return
+
+    def __SetHotkey(self):
+        if 'hotkey' in self.__setting and self.__setting['hotkey']:
+            self.RegisterHotKey(0, wx.MOD_CONTROL | wx.MOD_ALT, ord(self.__setting['hotkey']))
+            self.Bind(wx.EVT_HOTKEY, self.__OnHotkey, id = 0)
+        else:
+            self.UnregisterHotKey(0)
+            self.Unbind(wx.EVT_HOTKEY, id = 0)
+            pass
+        return
+
+    def __OnHotkey(self, _evt):
+        self.__OnCapture(None)
+        if self.IsIconized():
+            self.Iconize(False)
+        
+        self.Raise()
         return
 
     

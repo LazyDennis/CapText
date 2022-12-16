@@ -3,7 +3,7 @@ import TextReconize
 import api
 
 MAIN_VERSION = 1
-SUB_VERSION = 1
+SUB_VERSION = 2
 MINOR_VERSION = 0
 VERSION = str(MAIN_VERSION) + '.' + str(SUB_VERSION) + '.' + str(MINOR_VERSION)
 

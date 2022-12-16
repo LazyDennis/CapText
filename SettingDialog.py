@@ -24,6 +24,7 @@ class SettingDialog(wx.Dialog):
 
     def __InitUI(self):
         self.__main_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.__hotkey_text_ctrl = self.__InitHotkeySetting()
         self.__lang_type_sel = self.__InitLanguageTypeSelection()
         self.__main_sizer.AddStretchSpacer(1)
         self.__InitDialogButton()
@@ -31,12 +32,27 @@ class SettingDialog(wx.Dialog):
         # self.Fit()
         return
 
+    def __InitHotkeySetting(self):
+        BORDER = 5
+        hotkey_set_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        hotkey_label = wx.StaticText(self, wx.ID_ANY, u'全局热键：')
+        hotkey_text_ctrl = wx.TextCtrl(self, size=(150, -1))
+
+        hotkey_set_sizer.Add(hotkey_label, 0, wx.ALIGN_CENTER | wx.ALL, BORDER)
+        hotkey_set_sizer.Add(hotkey_text_ctrl, 1, wx.EXPAND | wx.ALL, BORDER)
+        self.__main_sizer.Add(hotkey_set_sizer, 0, wx.ALIGN_CENTER)
+        hotkey_text_ctrl.Bind(wx.EVT_CHAR, self.__OnChar)
+        if 'hotkey' in self.__setting and self.__setting['hotkey']:
+            hotkey_text_ctrl.SetValue('Ctrl + Alt + ' + self.__setting['hotkey'])
+        return hotkey_text_ctrl
+
     def __InitLanguageTypeSelection(self):
         BORDER = 5
-        lang_type_label = wx.StaticText(self, wx.ID_ANY, u'识别语言')
+        lang_type_label = wx.StaticText(self, wx.ID_ANY, u'识别语言：')
         lang_type_sel = wx.ComboBox(self,
                                     wx.ID_ANY,
                                     wx.EmptyString,
+                                    size=(150, -1),
                                     style=wx.CB_DROPDOWN
                                     | wx.CB_READONLY)
         i = 0
@@ -69,6 +85,24 @@ class SettingDialog(wx.Dialog):
         dialog_button_sizer.Realize()
         self.__main_sizer.Add(dialog_button_line, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, BORDER)
         self.__main_sizer.Add(dialog_button_sizer, 0, wx.ALIGN_CENTER | wx.ALL, BORDER)
+        return
+
+    def __OnChar(self, _evt: wx.KeyEvent):
+        key_code = _evt.GetKeyCode()
+        text: str = ''
+        if key_code == 32:
+            text = u'[空格]'
+        elif key_code in range(33, 126):
+            text = chr(key_code).upper()
+        elif key_code == 8 or key_code == 127:
+            self.__hotkey_text_ctrl.Clear()
+
+        if text:
+            self.__hotkey_text_ctrl.SetValue('Ctrl + Alt + ' + text)
+        else:
+            _evt.Skip()
+
+        self.__setting['hotkey'] = text
         return
 
     def __OnLanguageTypeSelect(self, _evt: wx.CommandEvent):
