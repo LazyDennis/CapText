@@ -101,7 +101,7 @@ class Mainframe(wx.Frame):
             if menu_info['show_on_screen']:
                 menu = wx.Menu()
                 for item in menu_info['menu_items']:
-                    if item['show_on_screen']:
+                    if item['show_on_screen'] and 'menutool' in item and item['menutool']:
                         menu_item = wx.MenuItem(**item['property'])
                         if 'icon' in item and item['icon']:
                             menu_item.SetBitmap(

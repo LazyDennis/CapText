@@ -31,7 +31,8 @@ MENUS = [
                 'show_on_screen': True,
                 'icon': u'创建_newlybuild.png',
                 'handler': '__OnNew',
-                'toolbartool': True
+                'toolbartool': True,
+                'menutool': True
             },
             {
                 'property':
@@ -45,6 +46,7 @@ MENUS = [
                 'icon': u'图片文件_image-files.png',
                 'handler': '__OnOpenImage',
                 'toolbartool': True,
+                'menutool': True,
                 'dialog':
                 {
                     'message': u'打开图片',
@@ -64,6 +66,7 @@ MENUS = [
                 'icon': u'图片下载_down-picture.png',
                 'handler': '__OnSaveCapture',
                 'toolbartool': True,
+                'menutool': True,
                 'dialog':
                 {
                     'message': u'保存当前截图',
@@ -87,6 +90,7 @@ MENUS = [
                 'icon': u'文本文件_file-text.png',
                 'handler': '__OnSaveText',
                 'toolbartool': True,
+                'menutool': True,
                 'dialog':
                 {
                     'message': u'保存识别文本',
@@ -112,7 +116,8 @@ MENUS = [
                 'show_on_screen': True,
                 'icon': u'退出_logout.png',
                 'handler': '__OnExit',
-                'toolbartool': True
+                'toolbartool': True,
+                'menutool': True
             }
         ]
     },
@@ -132,7 +137,8 @@ MENUS = [
                 'show_on_screen': True,
                 'icon': u'截图_screenshot-one.png',
                 'handler': '__OnCapture',
-                'toolbartool': True
+                'toolbartool': True,
+                'menutool': True
             },
             {
                 'property':
@@ -145,7 +151,8 @@ MENUS = [
                 'show_on_screen': True,
                 'icon': u'文字识别_text-recognition.png',
                 'handler': '__OnRecognize',
-                'toolbartool': True
+                'toolbartool': True,
+                'menutool': True
             },
             {
                 'property':
@@ -165,7 +172,8 @@ MENUS = [
                 'show_on_screen': True,
                 'icon': u'设置_setting-two.png',
                 'handler': '__OnSetting',
-                'toolbartool': True
+                'toolbartool': True,
+                'menutool': True
             }
         ]
     },
@@ -185,7 +193,8 @@ MENUS = [
                 'show_on_screen': True,
                 'icon': u'帮助_help.png',
                 'handler': '__OnHelp',
-                'toolbartool': True
+                'toolbartool': True,
+                'menutool': True
             },
             {
                 'property':
@@ -198,7 +207,8 @@ MENUS = [
                 'show_on_screen': True,
                 'icon': u'信息_info.png',
                 'handler': '__OnAbout',
-                'toolbartool': False
+                'toolbartool': False,
+                'menutool': True
             }
         ]
     }
