@@ -1,30 +1,8 @@
-import GlobalVars
-
-def GetIcon(_icon_path : str, _icon_size : tuple):
-    import wx
-    from icons import ICONS
-    from wx.lib.embeddedimage import PyEmbeddedImage
-
-    if _icon_path in ICONS:
-        bmp = PyEmbeddedImage(ICONS[_icon_path]).GetBitmap()
-        wx.Bitmap.Rescale(bmp, _icon_size)
-    else:
-        bmp = wx.NullBitmap
-    return bmp
-    
-
-def GetMenuById(_id: int):
-    for menu in GlobalVars.MENUS:
-        for item in menu['menu_items']:
-            if item['property']['id'] == _id:
-                return item
-    return None
-
 import wx
-from PIL import Image as PilImage
+from PIL.Image import Image as PilImage
 
 
-def PilImage2WxImage(_pil_image: PilImage.Image):
+def PilImage2WxImage(_pil_image:PilImage):
     '''
     转换　PIL Image 为　wxPython Image
     :param _pil_image: PIL.Image.Image
@@ -45,3 +23,4 @@ def WxImage2PilImage(_wx_image:wx.Image):
                                    bytes(_wx_image.GetData()))
     
     return pil_image
+

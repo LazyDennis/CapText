@@ -143,6 +143,20 @@ MENUS = [
             {
                 'property':
                 {
+                    'id': 113,
+                    'text': u'黑白\tCTRL+&T',
+                    'helpString': u'把截图设置为黑白',
+                    'kind': wx.ITEM_NORMAL
+                },
+                'show_on_screen': True,
+                'icon': u'',
+                'handler': '__OnImageEnhance',
+                'toolbartool': True,
+                'menutool': True
+            },
+            {
+                'property':
+                {
                     'id': 111,
                     'text': u'识别\tCTRL+&R',
                     'helpString': u'识别当前截图',

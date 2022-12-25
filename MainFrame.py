@@ -1,6 +1,7 @@
 import wx
 from GrabFrame import GrabFrame
 from SettingDialog import SettingDialog
+from ImageEnhanceDialog import ImageEnhanceDialog
 from io import BytesIO
 import Util
 from threading import Thread, Lock
@@ -12,15 +13,16 @@ class Mainframe(wx.Frame):
     __main_sizer: wx.BoxSizer
     __grab_frame: GrabFrame
     __capture_bitmap: wx.StaticBitmap
-    __result_bitmap: wx.Bitmap
+    __raw_bitmap: wx.Bitmap = None
+    __result_bitmap: wx.Bitmap = None
     __result_text: wx.TextCtrl
-    __handler_map: dict
-    __keymap: dict
-    __reconize_type: int
-    __text_reco: Thread
-    __status_bar_lock: Lock
-    __reconize_method: dict
-    __setting: dict
+    __handler_map: dict = None
+    __keymap: dict = None
+    __reconize_type: int = GlobalVars.RECONIZE_TYPE['百度']
+    __text_reco: Thread = None
+    __status_bar_lock: Lock = Lock()
+    __reconize_method: dict = None
+    __setting: dict = {}
     # __language_type: str
 
     def __init__(self, title):
@@ -37,6 +39,7 @@ class Mainframe(wx.Frame):
             '__OnCapture': self.__OnCapture,
             '__OnRecognize': self.__OnRecognize,
             '__OnSetting': self.__OnSetting,
+            '__OnImageEnhance': self.__OnImageEnhance,
             '__OnHelp': self.__OnHelp,
             '__OnAbout': self.__OnAbout
         }
@@ -47,13 +50,13 @@ class Mainframe(wx.Frame):
                 'id': wx.ID_ANY
             }
         }
-        self.__result_bitmap = None
-        self.__reconize_type = GlobalVars.RECONIZE_TYPE['百度']
-        self.__text_reco = None
-        self.__status_bar_lock = Lock()
-        self.__reconize_method = None
-        # self.__language_type = GlobalVars.RECONIZE_LANGUAGE[u'中英混合（默认）']
-        self.__setting = {}
+        # self.__result_bitmap = None
+        # self.__reconize_type = GlobalVars.RECONIZE_TYPE['百度']
+        # self.__text_reco = None
+        # self.__status_bar_lock = Lock()
+        # # self.__reconize_method = None
+        # # self.__language_type = GlobalVars.RECONIZE_LANGUAGE[u'中英混合（默认）']
+        # self.__setting = {}
         self.__setting['language_type'] = GlobalVars.RECONIZE_LANGUAGE[u'中英混合（默认）']
         self.__InitUi()
 
@@ -187,6 +190,7 @@ class Mainframe(wx.Frame):
         self.SetSize(self.DEFAULT_WINDOW_SIZE)
         self.__capture_bitmap.SetBitmap(wx.NullBitmap)
         self.__result_bitmap = None
+        self.__raw_bitmap = None
         self.__result_text.SetValue('')
         self.Layout()
         self.Refresh()
@@ -197,7 +201,8 @@ class Mainframe(wx.Frame):
         if path:
             open_image = wx.Bitmap(path)
             try:
-                self.__result_bitmap = wx.Bitmap(open_image)
+                self.__raw_bitmap = wx.Bitmap(open_image)
+                self.__result_bitmap = self.__raw_bitmap
                 self.__SetCaptureBitmap(open_image)
             except:
                 wx.MessageBox(u'打开图片文件失败！',
@@ -280,7 +285,7 @@ class Mainframe(wx.Frame):
                 self, screen_bitmap, (display_sum_width, display_sum_heigth),
                 (display_pos_x_min, display_pos_y_min))
             self.__grab_frame.Bind(wx.EVT_SHOW, self.__OnGrabFrameHidden)
-            self.__grab_frame.Bind(wx.EVT_CHAR, self.__OnChar)
+            self.__grab_frame.Bind(wx.EVT_CHAR, self.__OnChar)  # TODO: 转移至GramFrame类中绑定
         return
 
     def __OnRecognize(self, _evt):
@@ -355,7 +360,8 @@ class Mainframe(wx.Frame):
     def ProcessGrabBitmap(self, _grab_bitmap: wx.Bitmap):
         self.Show()
         if _grab_bitmap:
-            self.__result_bitmap = wx.Bitmap(_grab_bitmap)
+            self.__raw_bitmap = wx.Bitmap(_grab_bitmap)
+            self.__result_bitmap = self.__raw_bitmap
             # self.__CopyBitmapToClipboard(self.__result_bitmap)
             self.__SetCaptureBitmap(_grab_bitmap)
         self.__grab_frame.Close()
@@ -458,6 +464,15 @@ class Mainframe(wx.Frame):
             self.Iconize(False)
         
         self.Raise()
+        return
+    
+    def __OnImageEnhance(self, _evt):
+        image_enhance_dialog = ImageEnhanceDialog(self, 
+                                                  self.__raw_bitmap, 
+                                                  self.__result_bitmap)
+        if image_enhance_dialog.ShowModal() == wx.ID_OK:
+            self.__result_bitmap = image_enhance_dialog.GetModBitmap()
+        image_enhance_dialog.Close()
         return
 
     
