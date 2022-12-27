@@ -5,6 +5,7 @@ from ImageEnhanceDialog import ImageEnhanceDialog
 from io import BytesIO
 import Util
 from threading import Thread, Lock
+from ImageTuningPanel import ImageTuningPanel
 
 import GlobalVars
 
@@ -23,6 +24,7 @@ class Mainframe(wx.Frame):
     __status_bar_lock: Lock = Lock()
     __reconize_method: dict = None
     __setting: dict = {}
+    __tuning_panel: ImageTuningPanel = None
     # __language_type: str
 
     def __init__(self, title):
@@ -275,6 +277,8 @@ class Mainframe(wx.Frame):
         # display_sum_width, display_sum_heigth = wx.GetDisplaySize()
         '''For debugging'''
 
+        if self.__tuning_panel:
+            self.__tuning_panel.Hide()
         self.Hide()
         if not self.IsShown():
             wx.MilliSleep(250)
@@ -359,6 +363,8 @@ class Mainframe(wx.Frame):
 
     def ProcessGrabBitmap(self, _grab_bitmap: wx.Bitmap):
         self.Show()
+        if self.__tuning_panel:
+            self.__tuning_panel.Show()
         if _grab_bitmap:
             self.__raw_bitmap = wx.Bitmap(_grab_bitmap)
             self.__result_bitmap = self.__raw_bitmap
@@ -467,12 +473,28 @@ class Mainframe(wx.Frame):
         return
     
     def __OnImageEnhance(self, _evt):
-        image_enhance_dialog = ImageEnhanceDialog(self, 
-                                                  self.__raw_bitmap, 
-                                                  self.__result_bitmap)
-        if image_enhance_dialog.ShowModal() == wx.ID_OK:
-            self.__result_bitmap = image_enhance_dialog.GetModBitmap()
-        image_enhance_dialog.Close()
+        # image_enhance_dialog = ImageEnhanceDialog(self, 
+        #                                           self.__raw_bitmap, 
+        #                                           self.__result_bitmap)
+        # if image_enhance_dialog.ShowModal() == wx.ID_OK:
+        #     self.__result_bitmap = image_enhance_dialog.GetModBitmap()
+        # image_enhance_dialog.Close()
+        
+
+        if self.__tuning_panel is None:
+            self.__tuning_panel = ImageTuningPanel(self)
+            self.__tuning_panel.contrast_slider.Bind(wx.EVT_SLIDER, self.__OnEnhance)
+        return
+
+    def __OnEnhance(self, _evt):
+        from PIL import ImageEnhance
+        pil_image = Util.WxImage2PilImage(self.__raw_bitmap.ConvertToImage())
+        pil_enhance = ImageEnhance.Contrast(pil_image)
+        factor = self.__tuning_panel.contrast_slider.GetValue() / 5
+        pil_image = pil_enhance.enhance(factor)
+        self.__result_bitmap = Util.PilImage2WxImage(pil_image).ConvertToBitmap()
+
+        self.__SetCaptureBitmap(self.__result_bitmap)
         return
 
     

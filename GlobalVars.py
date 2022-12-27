@@ -144,8 +144,8 @@ MENUS = [
                 'property':
                 {
                     'id': 113,
-                    'text': u'黑白\tCTRL+&T',
-                    'helpString': u'把截图设置为黑白',
+                    'text': u'图像增强\tCTRL+&T',
+                    'helpString': u'调整图像',
                     'kind': wx.ITEM_NORMAL
                 },
                 'show_on_screen': True,
