@@ -1,36 +1,104 @@
 import wx
+import GlobalVars
+import Util
+from PIL import ImageEnhance
 
 
-class ImageTuningPanel(wx.Frame):
-    def __init__(self, _parent):
-        super().__init__(_parent, 
+class ImageTuningPanel(wx.Dialog):
+    sliders_settings = GlobalVars.SLIDER_SETTING
+    sliders: dict = {}
+    
+    def __init__(self, _parent, _pos=wx.DefaultPosition):
+        super().__init__(_parent,
                          style=
                          wx.CAPTION | 
                          wx.CLOSE_BOX | 
                          wx.FRAME_TOOL_WINDOW |
                          wx.FRAME_FLOAT_ON_PARENT |
                          wx.FRAME_NO_TASKBAR |
-                         wx.CLIP_CHILDREN)
-
+                         wx.CLIP_CHILDREN,
+                         pos=_pos)
+        self.slider_methods = {
+                'contrast': ImageEnhance.Contrast,
+                'color': ImageEnhance.Color,
+                'brightness': ImageEnhance.Brightness,
+                'sharpness': ImageEnhance.Sharpness
+            }
         self.__InitUi()
 
+
     def __InitUi(self):
-        BORDER = 5 
         self.__main_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        contrast_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        contrast_label = wx.StaticText(self, wx.ID_ANY, u'对比度：')
-        self.contrast_slider = wx.Slider(self, 
-                                    wx.ID_ANY,
-                                    value=10,
-                                    minValue=0,
-                                    maxValue=10,
-                                    style=wx.SL_MIN_MAX_LABELS)
-        contrast_sizer.Add(contrast_label, 0, wx.CENTER | wx.ALL, BORDER)
-        contrast_sizer.Add(self.contrast_slider, 0, wx.EXPAND | wx.ALL, BORDER)
-
-        self.__main_sizer.Add(contrast_sizer, 0, wx.EXPAND)
+        slider_sizer = self.__InitSliders()
+     
+        self.__main_sizer.Add(slider_sizer, 0, wx.EXPAND)
+        self.__default_button = self.__InitButton()
         
         self.Show()
         self.SetSizerAndFit(self.__main_sizer)
         return
+
+    def __InitSliders(self):
+        BORDER = 5
+        slider_sizer = wx.BoxSizer(wx.VERTICAL)
+        for sl_key, sl_val in self.sliders_settings.items():
+            sl_sizer = wx.BoxSizer(wx.HORIZONTAL)
+            label = wx.StaticText(self, wx.ID_ANY, sl_val['text'])
+            slider = wx.Slider(self, **sl_val['property'])
+            text_ctrl = wx.TextCtrl(self, 
+                                    value=str(slider.GetValue()), 
+                                    size=(30, -1),
+                                    style=wx.TE_PROCESS_ENTER)
+            sl_sizer.AddMany([
+                (label, 0, wx.ALIGN_CENTER | wx.ALL, BORDER),
+                (slider, 0, wx.EXPAND | wx.ALL, BORDER),
+                (text_ctrl, 0, wx.ALIGN_CENTER | wx.ALL, BORDER)
+            ])
+            slider_sizer.Add(sl_sizer, 0, wx.EXPAND)
+            self.sliders[sl_key] = {'slider': slider, 'text_ctrl': text_ctrl}
+            slider.Bind(wx.EVT_SLIDER, lambda evt, sl_key=sl_key : self.__OnEnhance(_evt=evt, _slkey=sl_key))
+            text_ctrl.Bind(wx.EVT_TEXT_ENTER, lambda evt, sl_key=sl_key: self.__OnTextEnter(evt, sl_key))
+        return slider_sizer
+
+    def __InitButton(self):
+        button = wx.Button(self, wx.ID_ANY, u'复原')
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(button, 0, wx.ALIGN_CENTER)
+        self.__main_sizer.Add(sizer, 0, wx.EXPAND)
+        button.Bind(wx.EVT_BUTTON, self.__OnSetDefault)
+
+    def __OnEnhance(self, _evt, _slkey):
+        value = self.sliders[_slkey]['slider'].GetValue()
+        self.sliders[_slkey]['text_ctrl'].SetValue(str(value))
+        raw_bitmap: wx.Bitmap = self.Parent.GetRawBitmap()
+        if raw_bitmap:
+            pil_image = Util.WxImage2PilImage(raw_bitmap.ConvertToImage())
+            for sl_key, sl_val in self.sliders.items():
+                ratio = self.sliders_settings[sl_key]['ratio']
+                val = sl_val['slider'].GetValue()
+                factor = val / ratio
+                pil_enhance = self.slider_methods[_slkey](pil_image)
+                pil_image = pil_enhance.enhance(factor)
+            self.Parent.SetResultBitmap(Util.PilImage2WxImage(pil_image).ConvertToBitmap())
+            self.Parent.SetCaptureBitmap(self.Parent.GetResultBitmap())
+        return
+
+    def __OnTextEnter(self, _evt, _slkey):
+        value = self.sliders[_slkey]['text_ctrl'].GetValue()
+        slider = self.sliders[_slkey]['slider']
+        slider.SetValue(int(value))
+        self.__OnEnhance(_evt, _slkey)
+        return
+
+    def __OnSetDefault(self, _evt):
+        raw_bitmap = self.Parent.GetRawBitmap()
+        self.Parent.SetCaptureBitmap(raw_bitmap if raw_bitmap else wx.NullBitmap)
+        for key, val in self.sliders.items():
+            default_value = self.sliders_settings[key]['property']['value']
+            val['slider'].SetValue(default_value)
+            val['text_ctrl'].SetValue(str(default_value))
+        return
+        
+
+        

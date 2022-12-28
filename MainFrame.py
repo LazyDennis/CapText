@@ -52,14 +52,12 @@ class Mainframe(wx.Frame):
                 'id': wx.ID_ANY
             }
         }
-        # self.__result_bitmap = None
-        # self.__reconize_type = GlobalVars.RECONIZE_TYPE['百度']
-        # self.__text_reco = None
-        # self.__status_bar_lock = Lock()
-        # # self.__reconize_method = None
-        # # self.__language_type = GlobalVars.RECONIZE_LANGUAGE[u'中英混合（默认）']
-        # self.__setting = {}
-        self.__setting['language_type'] = GlobalVars.RECONIZE_LANGUAGE[u'中英混合（默认）']
+
+        self.__setting = {
+            'hotkey': 'D',
+            'language_type': GlobalVars.RECONIZE_LANGUAGE[u'中英混合（默认）']
+        }
+
         self.__InitUi()
 
     def __InitUi(self):
@@ -205,7 +203,7 @@ class Mainframe(wx.Frame):
             try:
                 self.__raw_bitmap = wx.Bitmap(open_image)
                 self.__result_bitmap = self.__raw_bitmap
-                self.__SetCaptureBitmap(open_image)
+                self.SetCaptureBitmap(open_image)
             except:
                 wx.MessageBox(u'打开图片文件失败！',
                               u'错误',
@@ -369,11 +367,11 @@ class Mainframe(wx.Frame):
             self.__raw_bitmap = wx.Bitmap(_grab_bitmap)
             self.__result_bitmap = self.__raw_bitmap
             # self.__CopyBitmapToClipboard(self.__result_bitmap)
-            self.__SetCaptureBitmap(_grab_bitmap)
+            self.SetCaptureBitmap(_grab_bitmap)
         self.__grab_frame.Close()
         return
 
-    def __SetCaptureBitmap(self, _bitmap: wx.Bitmap):
+    def SetCaptureBitmap(self, _bitmap: wx.Bitmap):
         ctrl_width, ctrl_height = self.__capture_bitmap.GetSize()
         bitmap_width, bitmap_height = _bitmap.GetSize()
         ctrl_ratio = ctrl_width / ctrl_height
@@ -395,7 +393,7 @@ class Mainframe(wx.Frame):
             frame_width / 2,
             self.__capture_bitmap.GetSize().GetHeight())
         if self.__result_bitmap:
-            self.__SetCaptureBitmap(wx.Bitmap(self.__result_bitmap))
+            self.SetCaptureBitmap(wx.Bitmap(self.__result_bitmap))
 
         _evt.Skip()
         return
@@ -473,29 +471,30 @@ class Mainframe(wx.Frame):
         return
     
     def __OnImageEnhance(self, _evt):
-        # image_enhance_dialog = ImageEnhanceDialog(self, 
-        #                                           self.__raw_bitmap, 
-        #                                           self.__result_bitmap)
-        # if image_enhance_dialog.ShowModal() == wx.ID_OK:
-        #     self.__result_bitmap = image_enhance_dialog.GetModBitmap()
-        # image_enhance_dialog.Close()
-        
+        def OnClose(_evt):
+            self.__tuning_panel.Hide()
+            _evt.Veto()
+            return
 
         if self.__tuning_panel is None:
             self.__tuning_panel = ImageTuningPanel(self)
-            self.__tuning_panel.contrast_slider.Bind(wx.EVT_SLIDER, self.__OnEnhance)
+            pos:wx.Point = self.GetPosition()
+            panel_size = self.__tuning_panel.GetSize()
+            self.__tuning_panel.SetPosition(wx.Point(pos.x - panel_size.GetWidth(), pos.y))
+            # self.__tuning_panel.Bind(wx.EVT_CLOSE, OnClose)
+        else:
+            self.__tuning_panel.Show(not self.__tuning_panel.IsShown())
         return
 
-    def __OnEnhance(self, _evt):
-        from PIL import ImageEnhance
-        pil_image = Util.WxImage2PilImage(self.__raw_bitmap.ConvertToImage())
-        pil_enhance = ImageEnhance.Contrast(pil_image)
-        factor = self.__tuning_panel.contrast_slider.GetValue() / 5
-        pil_image = pil_enhance.enhance(factor)
-        self.__result_bitmap = Util.PilImage2WxImage(pil_image).ConvertToBitmap()
-
-        self.__SetCaptureBitmap(self.__result_bitmap)
+    def GetRawBitmap(self) -> wx.Bitmap:
+        return self.__raw_bitmap
+    
+    def SetResultBitmap(self, _bitmap: wx.Bitmap):
+        self.__result_bitmap = _bitmap
         return
+
+    def GetResultBitmap(self) -> wx.Bitmap:
+        return self.__result_bitmap
 
     
 

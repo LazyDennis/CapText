@@ -37,6 +37,7 @@ class SettingDialog(wx.Dialog):
         hotkey_set_sizer = wx.BoxSizer(wx.HORIZONTAL)
         hotkey_label = wx.StaticText(self, wx.ID_ANY, u'全局热键：')
         hotkey_text_ctrl = wx.TextCtrl(self, size=(150, -1))
+        
 
         hotkey_set_sizer.Add(hotkey_label, 0, wx.ALIGN_CENTER | wx.ALL, BORDER)
         hotkey_set_sizer.Add(hotkey_text_ctrl, 1, wx.EXPAND | wx.ALL, BORDER)

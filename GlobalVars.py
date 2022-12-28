@@ -3,7 +3,7 @@ import TextReconize
 import api
 
 MAIN_VERSION = 1
-SUB_VERSION = 2
+SUB_VERSION = 3
 MINOR_VERSION = 0
 VERSION = str(MAIN_VERSION) + '.' + str(SUB_VERSION) + '.' + str(MINOR_VERSION)
 
@@ -149,7 +149,7 @@ MENUS = [
                     'kind': wx.ITEM_NORMAL
                 },
                 'show_on_screen': True,
-                'icon': u'',
+                'icon': u'均衡器_equalizer.png',
                 'handler': '__OnImageEnhance',
                 'toolbartool': True,
                 'menutool': True
@@ -256,6 +256,53 @@ RECONIZE_METHOD = {
                 'language_type': 'CHN_ENG',
                 'paragraph': True
             }
+        }
+    }
+}
+
+SLIDER_SETTING = {
+    'contrast': {
+        'show': True,
+        'text': u'对比度',
+        'ratio': 10,
+        'property':{
+            'value': 10,
+            'minValue': 0,
+            'maxValue': 100,
+            'style': wx.SL_MIN_MAX_LABELS
+        }
+    },
+    'color': {
+        'show': True,
+        'text': u'颜   色',
+        'ratio': 10,
+        'property':{
+            'value': 10,
+            'minValue': 0,
+            'maxValue': 100,
+            'style': wx.SL_MIN_MAX_LABELS
+        }
+    },
+    'brightness': {
+        'show': True,
+        'text': u'亮   度',
+        'ratio': 10,
+        'property':{
+            'value': 10,
+            'minValue': 0,
+            'maxValue': 100,
+            'style': wx.SL_MIN_MAX_LABELS
+        }
+    },
+    'sharpness': {
+        'show': True,
+        'text': u'锐   度',
+        'ratio': 10,
+        'property':{
+            'value': 10,
+            'minValue': 0,
+            'maxValue': 100,
+            'style': wx.SL_MIN_MAX_LABELS
         }
     }
 }
