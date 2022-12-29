@@ -268,7 +268,7 @@ SLIDER_SETTING = {
         'property':{
             'value': 10,
             'minValue': 0,
-            'maxValue': 100,
+            'maxValue': 20,
             'style': wx.SL_MIN_MAX_LABELS
         }
     },
@@ -279,7 +279,7 @@ SLIDER_SETTING = {
         'property':{
             'value': 10,
             'minValue': 0,
-            'maxValue': 100,
+            'maxValue': 20,
             'style': wx.SL_MIN_MAX_LABELS
         }
     },
@@ -290,7 +290,7 @@ SLIDER_SETTING = {
         'property':{
             'value': 10,
             'minValue': 0,
-            'maxValue': 100,
+            'maxValue': 20,
             'style': wx.SL_MIN_MAX_LABELS
         }
     },
@@ -301,7 +301,7 @@ SLIDER_SETTING = {
         'property':{
             'value': 10,
             'minValue': 0,
-            'maxValue': 100,
+            'maxValue': 20,
             'style': wx.SL_MIN_MAX_LABELS
         }
     }

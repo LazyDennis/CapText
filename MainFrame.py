@@ -86,6 +86,7 @@ class Mainframe(wx.Frame):
         self.__taskbar_icon = MainframeIcon(self)
         
         self.SetSizer(self.__main_sizer)
+        self.Center()
         # color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
         # self.__menu_bar.SetBackgroundColour(color)
         # self.__toolbar.SetBackgroundColour(color)
@@ -372,19 +373,20 @@ class Mainframe(wx.Frame):
         return
 
     def SetCaptureBitmap(self, _bitmap: wx.Bitmap):
-        ctrl_width, ctrl_height = self.__capture_bitmap.GetSize()
-        bitmap_width, bitmap_height = _bitmap.GetSize()
-        ctrl_ratio = ctrl_width / ctrl_height
-        bitmap_ratio = bitmap_width / bitmap_height
-        if bitmap_ratio >= ctrl_ratio:
-            target_width = ctrl_width
-            target_height = target_width / bitmap_width * bitmap_height
-        else:
-            target_height = ctrl_height
-            target_width = ctrl_height / bitmap_height * bitmap_width
-        wx.Bitmap.Rescale(_bitmap, (target_width, target_height))
-        self.__capture_bitmap.SetBitmap(_bitmap)
-        self.Layout()
+        if _bitmap or _bitmap != wx.NullBitmap:
+            ctrl_width, ctrl_height = self.__capture_bitmap.GetSize()
+            bitmap_width, bitmap_height = _bitmap.GetSize()
+            ctrl_ratio = ctrl_width / ctrl_height
+            bitmap_ratio = bitmap_width / bitmap_height
+            if bitmap_ratio >= ctrl_ratio:
+                target_width = ctrl_width
+                target_height = target_width / bitmap_width * bitmap_height
+            else:
+                target_height = ctrl_height
+                target_width = ctrl_height / bitmap_height * bitmap_width
+            wx.Bitmap.Rescale(_bitmap, (target_width, target_height))
+            self.__capture_bitmap.SetBitmap(_bitmap)
+            self.Layout()
         return
 
     def __OnResize(self, _evt: wx.SizeEvent):
