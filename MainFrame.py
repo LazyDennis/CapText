@@ -97,6 +97,7 @@ class Mainframe(wx.Frame):
         self.Bind(wx.EVT_SIZE, self.__OnResize)
         self.Bind(wx.EVT_CLOSE, self.__OnClose)
         self.Bind(wx.EVT_ICONIZE, self.__OnIconize)
+        self.Bind(wx.EVT_MOVING, self.__OnMoving)
 
     def __InitMenu(self):
         menu_bar = wx.MenuBar()
@@ -497,6 +498,14 @@ class Mainframe(wx.Frame):
 
     def GetResultBitmap(self) -> wx.Bitmap:
         return self.__result_bitmap
+
+    def __OnMoving(self, _evt):
+        if self.__tuning_panel:
+            frame_pos : wx.Point = _evt.GetPosition()
+            tuning_size: wx.Size = self.__tuning_panel.GetSize()
+            self.__tuning_panel.SetPosition(wx.Point(frame_pos.x - tuning_size.GetWidth(), frame_pos.y))
+        _evt.Skip()
+        return
 
     
 
