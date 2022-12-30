@@ -8,15 +8,15 @@ class ImageTuningPanel(wx.Dialog):
     sliders_settings = GlobalVars.SLIDER_SETTING
     sliders: dict = {}
     
-    def __init__(self, _parent, _pos=wx.DefaultPosition):
+    def __init__(self, _parent, _tool, _pos=wx.DefaultPosition):
         super().__init__(_parent,
                          style=
                          wx.CAPTION | 
-                         wx.CLOSE_BOX | 
+                        #  wx.CLOSE_BOX | 
                          wx.FRAME_TOOL_WINDOW |
                          wx.FRAME_FLOAT_ON_PARENT |
-                         wx.FRAME_NO_TASKBAR |
-                         wx.CLIP_CHILDREN,
+                         wx.FRAME_NO_TASKBAR,# |
+                        #  wx.CLIP_CHILDREN,
                          pos=_pos)
         self.slider_methods = {
                 'contrast': ImageEnhance.Contrast,
@@ -24,7 +24,11 @@ class ImageTuningPanel(wx.Dialog):
                 'brightness': ImageEnhance.Brightness,
                 'sharpness': ImageEnhance.Sharpness
             }
+        self.__tool: wx.ToolBarToolBase = _tool
+        self.__tool.SetToggle(True)
+        self.__tool.Toggle(True)
         self.__InitUi()
+        # self.Bind(wx.EVT_CLOSE, self.__OnClose)
 
 
     def __InitUi(self):
@@ -67,6 +71,7 @@ class ImageTuningPanel(wx.Dialog):
         sizer.Add(button, 0, wx.ALIGN_CENTER)
         self.__main_sizer.Add(sizer, 0, wx.EXPAND)
         button.Bind(wx.EVT_BUTTON, self.__OnSetDefault)
+        return button
 
     def __OnEnhance(self, _evt, _slkey):
         value = self.sliders[_slkey]['slider'].GetValue()
@@ -100,5 +105,11 @@ class ImageTuningPanel(wx.Dialog):
             val['text_ctrl'].SetValue(str(default_value))
         return
         
-
+    # def __OnClose(self, _evt):
+    #     # self.Hide()
+    #     print(self.__tool.IsToggled())
+    #     print(self.__tool.Toggle(False))
+    #     print(self.__tool.SetToggle(False))
+    #     _evt.Veto()
+    #     return
         

@@ -473,20 +473,16 @@ class Mainframe(wx.Frame):
         self.Raise()
         return
     
-    def __OnImageEnhance(self, _evt):
-        def OnClose(_evt):
-            self.__tuning_panel.Hide()
-            _evt.Veto()
-            return
-
+    def __OnImageEnhance(self, _evt: wx.CommandEvent):
+        tool: wx.ToolBarToolBase = self.__toolbar.FindById(_evt.GetId())
         if self.__tuning_panel is None:
-            self.__tuning_panel = ImageTuningPanel(self)
+            self.__tuning_panel = ImageTuningPanel(self, tool)
             pos:wx.Point = self.GetPosition()
             panel_size = self.__tuning_panel.GetSize()
             self.__tuning_panel.SetPosition(wx.Point(pos.x - panel_size.GetWidth(), pos.y))
-            # self.__tuning_panel.Bind(wx.EVT_CLOSE, OnClose)
         else:
             self.__tuning_panel.Show(not self.__tuning_panel.IsShown())
+            tool.Toggle(self.__tuning_panel.IsShown())
         return
 
     def GetRawBitmap(self) -> wx.Bitmap:
