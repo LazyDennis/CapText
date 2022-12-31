@@ -3,8 +3,8 @@ import TextReconize
 import api
 
 MAIN_VERSION = 1
-SUB_VERSION = 3
-MINOR_VERSION = 3
+SUB_VERSION = 4
+MINOR_VERSION = 0
 VERSION = str(MAIN_VERSION) + '.' + str(SUB_VERSION) + '.' + str(MINOR_VERSION)
 
 ICON_SETTING = {
@@ -305,4 +305,18 @@ SLIDER_SETTING = {
             'style': wx.SL_MIN_MAX_LABELS
         }
     }
+}
+
+CAPTURE_ALL_DISPLAY = 0
+CAPTURE_CURRENT_DISPLAY = 1
+CAPTURE_DISPLAY_SETTING = {
+    CAPTURE_ALL_DISPLAY: u'截取所有屏幕',
+    CAPTURE_CURRENT_DISPLAY: u'截取当前屏幕'
+}
+
+DEFAULT_SETTING = {
+            'hotkey': 'D',
+            'language_type': RECONIZE_LANGUAGE[u'中英混合（默认）'],
+            'capture_all_display': CAPTURE_ALL_DISPLAY, # 0 for all, 1 for current
+            'close_to_taskbar': True, # True for close to taskbar, False for close to exit
 }

@@ -52,10 +52,7 @@ class Mainframe(wx.Frame):
             }
         }
 
-        self.__setting = {
-            'hotkey': 'D',
-            'language_type': GlobalVars.RECONIZE_LANGUAGE[u'中英混合（默认）']
-        }
+        self.__setting = GlobalVars.DEFAULT_SETTING
 
         self.__InitUi()
 
@@ -256,24 +253,39 @@ class Mainframe(wx.Frame):
 
     def __OnCapture(self, _evt):
         self.__OnNew(None)
-        displays = []
-        display_pos_x_min = 0
-        display_pos_y_min = 0
-        display_pos_x_max = 0
-        display_pos_y_max = 0
-        for i in range(wx.Display.GetCount()):
-            display = wx.Display(i)
-            displays.append(display)
-            pos_x, pos_y, width, height = display.GetGeometry()
-            display_pos_x_min = pos_x if pos_x < display_pos_x_min else display_pos_x_min
-            display_pos_y_min = pos_y if pos_y < display_pos_y_min else display_pos_y_min
-            pos_x += width
-            pos_y += height
-            display_pos_x_max = pos_x if pos_x > display_pos_x_max else display_pos_x_max
-            display_pos_y_max = pos_y if pos_y > display_pos_y_max else display_pos_y_max
-
-        display_sum_width = display_pos_x_max - display_pos_x_min
-        display_sum_heigth = display_pos_y_max - display_pos_y_min
+        def GetDisplayRects(display: wx.Display):
+            mode: wx.VideoMode = display.GetCurrentMode()
+            show_rect: wx.Rect = display.GetGeometry()
+            real_w, real_h = mode.w, mode.h
+            real_x = real_w * (show_rect.GetX() != 0) 
+            real_y = real_h * (show_rect.GetY() != 0)
+            cap_rect: wx.Rect = wx.Rect(real_x, real_y, real_w, real_h)
+            return show_rect, cap_rect
+        
+        if self.__setting['capture_all_display'] == GlobalVars.CAPTURE_ALL_DISPLAY:
+            show_rects: list[wx.Rect] = []
+            cap_rects: list[wx.Rect] = []
+            for i in range(wx.Display.GetCount()):
+                display = wx.Display(i)
+                show_rect, cap_rect = GetDisplayRects(display)
+                show_rects.append(show_rect)
+                cap_rects.append(cap_rect)
+            
+            def SumRects(rects: list[wx.Rect]):            
+                if rects:
+                    res_rect = wx.Rect(0, 0, 0, 0)
+                    for rect in rects:
+                        res_rect += rect
+                    return res_rect
+                else:
+                    return None
+            
+            show_sum_rect: wx.Rect = SumRects(show_rects)
+            cap_sum_rect: wx.Rect = SumRects(cap_rects)
+        else:
+            display = wx.Display(self)
+            show_sum_rect, cap_sum_rect = GetDisplayRects(display)
+        
         '''For debugging'''
         # display_pos_x_min = 0
         # display_pos_y_min = 0
@@ -286,11 +298,11 @@ class Mainframe(wx.Frame):
         if not self.IsShown():
             wx.MilliSleep(250)
             screen_bitmap = self.__GetScreenBmp(
-            wx.Size(display_sum_width, display_sum_heigth),
-            wx.Point(display_pos_x_min, display_pos_y_min))
+            cap_sum_rect.GetSize(), cap_sum_rect.GetPosition())         
+            wx.Bitmap.Rescale(screen_bitmap, show_sum_rect.GetSize())
             self.__grab_frame: GrabFrame = GrabFrame(
-                self, screen_bitmap, (display_sum_width, display_sum_heigth),
-                (display_pos_x_min, display_pos_y_min))
+                self, screen_bitmap, show_sum_rect.GetSize(),
+                show_sum_rect.GetPosition())
             self.__grab_frame.Bind(wx.EVT_SHOW, self.__OnGrabFrameHidden)
             self.__grab_frame.Bind(wx.EVT_CHAR, self.__OnChar)  # TODO: 转移至GramFrame类中绑定
             self.__grab_frame.Bind(wx.EVT_RIGHT_UP, self.__OnKeyEsc)
@@ -362,7 +374,6 @@ class Mainframe(wx.Frame):
             if len(dots) == 3:
                 dots = '.'
             wx.MilliSleep(100)
-
         return
 
     def ProcessGrabBitmap(self, _grab_bitmap: wx.Bitmap):
@@ -401,6 +412,7 @@ class Mainframe(wx.Frame):
             self.__capture_bitmap.GetSize().GetHeight())
         if self.__result_bitmap:
             self.SetCaptureBitmap(wx.Bitmap(self.__result_bitmap))
+        self.__OnMoving(None)
 
         _evt.Skip()
         return
@@ -414,10 +426,12 @@ class Mainframe(wx.Frame):
             self.__TextRecognize(self.__result_bitmap)
         return
 
-    def __OnKeyEsc(self, evt):
+    def __OnKeyEsc(self, _evt):
         self.__grab_frame.Hide()
         if not self.__grab_frame.IsShown():
             self.Show()
+            if self.__tuning_panel:
+                self.__tuning_panel.Show(self.__tuning_panel.GetTool().IsToggled())
             self.__grab_frame.Close()
         return
 
@@ -501,10 +515,11 @@ class Mainframe(wx.Frame):
 
     def __OnMoving(self, _evt):
         if self.__tuning_panel:
-            frame_pos : wx.Point = _evt.GetPosition()
+            frame_pos : wx.Point = self.GetPosition()
             tuning_size: wx.Size = self.__tuning_panel.GetSize()
             self.__tuning_panel.SetPosition(wx.Point(frame_pos.x - tuning_size.GetWidth(), frame_pos.y))
-        _evt.Skip()
+        if _evt:
+            _evt.Skip()
         return
 
     

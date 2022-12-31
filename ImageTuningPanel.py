@@ -110,6 +110,9 @@ class ImageTuningPanel(wx.Dialog):
             val['slider'].SetValue(default_value)
             val['text_ctrl'].SetValue(str(default_value))
         return
+    
+    def GetTool(self)-> wx.ToolBarToolBase:
+        return self.__tool
         
     # def __OnClose(self, _evt):
     #     # self.Hide()

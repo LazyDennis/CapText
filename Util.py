@@ -45,3 +45,9 @@ def WxImage2PilImage(_wx_image:wx.Image):
                                    bytes(_wx_image.GetData()))
     
     return pil_image
+
+def GetDictKey(_dict : dict, _val):
+    for key, value in _dict.items():
+        if value == _val:
+            return key
+    return None
