@@ -75,7 +75,7 @@ class SettingDialog(wx.Dialog):
         lang_type_sel.SetSelection(select_index)
         self.__setting['language_type'] = lang_type_sel.GetClientData(
             select_index)
-        lang_type_sel.Bind(wx.EVT_COMBOBOX, self.__OnLanguageTypeSelect)
+        # lang_type_sel.Bind(wx.EVT_COMBOBOX, self.__OnLanguageTypeSelect)
 
         lang_type_sizer = wx.BoxSizer(wx.HORIZONTAL)
         lang_type_sizer.Add(lang_type_label, 0, wx.ALIGN_CENTER | wx.ALL,
