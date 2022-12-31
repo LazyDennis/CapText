@@ -4,7 +4,7 @@ import api
 
 MAIN_VERSION = 1
 SUB_VERSION = 3
-MINOR_VERSION = 2
+MINOR_VERSION = 3
 VERSION = str(MAIN_VERSION) + '.' + str(SUB_VERSION) + '.' + str(MINOR_VERSION)
 
 ICON_SETTING = {
@@ -264,44 +264,44 @@ SLIDER_SETTING = {
     'contrast': {
         'show': True,
         'text': u'对比度',
-        'ratio': 10,
+        # 'ratio': 10,
         'property':{
-            'value': 10,
-            'minValue': 0,
-            'maxValue': 20,
+            'value': 0,
+            'minValue': -50,
+            'maxValue': 50,
             'style': wx.SL_MIN_MAX_LABELS
         }
     },
     'color': {
         'show': True,
         'text': u'颜   色',
-        'ratio': 10,
+        # 'ratio': 10,
         'property':{
-            'value': 10,
-            'minValue': 0,
-            'maxValue': 20,
+            'value': 0,
+            'minValue': -50,
+            'maxValue': 50,
             'style': wx.SL_MIN_MAX_LABELS
         }
     },
     'brightness': {
         'show': True,
         'text': u'亮   度',
-        'ratio': 10,
+        # 'ratio': 10,
         'property':{
-            'value': 10,
-            'minValue': 0,
-            'maxValue': 20,
+            'value': 0,
+            'minValue': -50,
+            'maxValue': 50,
             'style': wx.SL_MIN_MAX_LABELS
         }
     },
     'sharpness': {
         'show': True,
         'text': u'锐   度',
-        'ratio': 10,
+        # 'ratio': 10,
         'property':{
-            'value': 10,
-            'minValue': 0,
-            'maxValue': 20,
+            'value': 0,
+            'minValue': -50,
+            'maxValue': 50,
             'style': wx.SL_MIN_MAX_LABELS
         }
     }

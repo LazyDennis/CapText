@@ -1,7 +1,6 @@
 import wx
 from GrabFrame import GrabFrame
 from SettingDialog import SettingDialog
-from ImageEnhanceDialog import ImageEnhanceDialog
 from io import BytesIO
 import Util
 from threading import Thread, Lock
@@ -189,11 +188,14 @@ class Mainframe(wx.Frame):
         return status_bar
 
     def __OnNew(self, _evt):
-        self.SetSize(self.DEFAULT_WINDOW_SIZE)
+        if _evt:
+            self.SetSize(self.DEFAULT_WINDOW_SIZE)
         self.__capture_bitmap.SetBitmap(wx.NullBitmap)
         self.__result_bitmap = None
         self.__raw_bitmap = None
         self.__result_text.SetValue('')
+        if self.__tuning_panel:
+            self.__tuning_panel.SetDefault()
         self.Layout()
         self.Refresh()
         return
@@ -253,6 +255,7 @@ class Mainframe(wx.Frame):
         return
 
     def __OnCapture(self, _evt):
+        self.__OnNew(None)
         displays = []
         display_pos_x_min = 0
         display_pos_y_min = 0
@@ -283,13 +286,14 @@ class Mainframe(wx.Frame):
         if not self.IsShown():
             wx.MilliSleep(250)
             screen_bitmap = self.__GetScreenBmp(
-                wx.Size(display_sum_width, display_sum_heigth),
-                wx.Point(display_pos_x_min, display_pos_y_min))
+            wx.Size(display_sum_width, display_sum_heigth),
+            wx.Point(display_pos_x_min, display_pos_y_min))
             self.__grab_frame: GrabFrame = GrabFrame(
                 self, screen_bitmap, (display_sum_width, display_sum_heigth),
                 (display_pos_x_min, display_pos_y_min))
             self.__grab_frame.Bind(wx.EVT_SHOW, self.__OnGrabFrameHidden)
             self.__grab_frame.Bind(wx.EVT_CHAR, self.__OnChar)  # TODO: 转移至GramFrame类中绑定
+            self.__grab_frame.Bind(wx.EVT_RIGHT_UP, self.__OnKeyEsc)
         return
 
     def __OnRecognize(self, _evt):

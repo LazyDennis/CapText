@@ -61,7 +61,7 @@ class ImageTuningPanel(wx.Dialog):
             ])
             slider_sizer.Add(sl_sizer, 0, wx.EXPAND)
             self.sliders[sl_key] = {'slider': slider, 'text_ctrl': text_ctrl}
-            slider.Bind(wx.EVT_SLIDER, lambda evt, sl_key=sl_key : self.__OnEnhance(_evt=evt, _slkey=sl_key))
+            slider.Bind(wx.EVT_SLIDER, lambda evt, sl_key=sl_key : self.__OnSlide(_evt=evt, _slkey=sl_key))
             text_ctrl.Bind(wx.EVT_TEXT_ENTER, lambda evt, sl_key=sl_key: self.__OnTextEnter(evt, sl_key))
         return slider_sizer
 
@@ -73,16 +73,19 @@ class ImageTuningPanel(wx.Dialog):
         button.Bind(wx.EVT_BUTTON, self.__OnSetDefault)
         return button
 
-    def __OnEnhance(self, _evt, _slkey):
+    def __OnSlide(self, _evt, _slkey):
         value = self.sliders[_slkey]['slider'].GetValue()
         self.sliders[_slkey]['text_ctrl'].SetValue(str(value))
         raw_bitmap: wx.Bitmap = self.Parent.GetRawBitmap()
         if raw_bitmap:
             pil_image = Util.WxImage2PilImage(raw_bitmap.ConvertToImage())
             for sl_key, sl_val in self.sliders.items():
-                ratio = self.sliders_settings[sl_key]['ratio']
+                max_val = sl_val['slider'].GetMax()
+                min_val = sl_val['slider'].GetMin()
                 val = sl_val['slider'].GetValue()
-                factor = val / ratio
+                mid_val = (max_val - min_val) / 2 if min_val >= 0 else 0
+                ratio = 1 / (mid_val - min_val) #self.sliders_settings[sl_key]['ratio']
+                factor = (val - min_val) / ratio
                 pil_enhance = self.slider_methods[_slkey](pil_image)
                 pil_image = pil_enhance.enhance(factor)
             self.Parent.SetResultBitmap(Util.PilImage2WxImage(pil_image).ConvertToBitmap())
@@ -93,10 +96,13 @@ class ImageTuningPanel(wx.Dialog):
         value = self.sliders[_slkey]['text_ctrl'].GetValue()
         slider = self.sliders[_slkey]['slider']
         slider.SetValue(int(value))
-        self.__OnEnhance(_evt, _slkey)
+        self.__OnSlide(_evt, _slkey)
         return
 
     def __OnSetDefault(self, _evt):
+        self.SetDefault()
+        
+    def SetDefault(self):
         raw_bitmap = self.Parent.GetRawBitmap()
         self.Parent.SetCaptureBitmap(raw_bitmap if raw_bitmap else wx.NullBitmap)
         for key, val in self.sliders.items():
