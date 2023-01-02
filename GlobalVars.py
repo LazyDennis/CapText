@@ -2,6 +2,8 @@ import wx
 import TextReconize
 import api
 
+TITLE = 'CapText'
+
 MAIN_VERSION = 1
 SUB_VERSION = 4
 MINOR_VERSION = 1
@@ -314,9 +316,17 @@ CAPTURE_DISPLAY_SETTING = {
     CAPTURE_CURRENT_DISPLAY: u'截取当前屏幕'
 }
 
+CLOSE_TO_TASKBAR = 0
+CLOSE_TO_EXIT = 1
+CLOSE_SETTING = {
+    CLOSE_TO_TASKBAR: u'最小化到系统托盘',
+    CLOSE_TO_EXIT: u'退出' + TITLE
+}
+
 DEFAULT_SETTING = {
             'hotkey': 'D',
             'language_type': RECONIZE_LANGUAGE[u'中英混合（默认）'],
             'capture_all_display': CAPTURE_ALL_DISPLAY, # 0 for all, 1 for current
-            'close_to_taskbar': True, # True for close to taskbar, False for close to exit
+            'allowed_close_prompt': True,
+            'close_setting': CLOSE_TO_TASKBAR, # True for close to taskbar, False for close to exit
 }

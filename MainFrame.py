@@ -92,7 +92,7 @@ class Mainframe(wx.Frame):
         self.__ApplySetting()
         self.Bind(wx.EVT_SIZE, self.__OnResize)
         self.Bind(wx.EVT_CLOSE, self.__OnClose)
-        self.Bind(wx.EVT_ICONIZE, self.__OnIconize)
+        # self.Bind(wx.EVT_ICONIZE, self.__OnIconize)
         self.Bind(wx.EVT_MOVING, self.__OnMoving)
 
     def __InitMenu(self):
@@ -314,7 +314,7 @@ class Mainframe(wx.Frame):
         return
 
     def __OnSetting(self, _evt):
-        self.__setting_dialog = SettingDialog(self, self.__setting, (300, -1))
+        self.__setting_dialog = SettingDialog(self, self.__setting, (400, -1))
         if self.__setting_dialog.ShowModal() == wx.ID_OK:
             self.__setting = self.__setting_dialog.GetSetting()
             self.__ApplySetting()
@@ -447,15 +447,36 @@ class Mainframe(wx.Frame):
         return self.__status_bar_lock
     
     def __OnClose(self, _evt: wx.CloseEvent):
-        if self.__taskbar_icon:
-            self.__taskbar_icon.Destroy()
-        _evt.Skip()
+        if self.__setting['allowed_close_prompt']:
+            from CloseDialog import CloseDialog
+            close_dialog = CloseDialog(self, self.__setting)
+            res = close_dialog.ShowModal()
+            if res == wx.ID_OK:
+                close_setting = close_dialog.GetSetting()
+                if not close_setting['allowed_prompt']:
+                    self.__setting['allowed_close_prompt'] = False
+                    self.__setting['close_setting'] = close_setting['close_setting']
+                setting = close_setting['close_setting']
+            else:
+                _evt.Veto()
+                return
+        else:
+            setting = self.__setting['close_setting']
+
+        if setting == GlobalVars.CLOSE_TO_TASKBAR:
+            self.Iconize(True)
+            self.Hide()
+            _evt.Veto()
+        else:
+            if self.__taskbar_icon:
+                self.__taskbar_icon.Destroy()
+            _evt.Skip()
         return
         
     def __OnIconize(self, _evt: wx.IconizeEvent):
         if self.__taskbar_icon:
             self.Iconize(True)
-            self.Hide()
+            # self.Hide()
 
         return
 

@@ -6,7 +6,7 @@ from MainFrame import Mainframe
 def main():
     
     app = wx.App()
-    frame = Mainframe(title='CapText' + ' ' + GlobalVars.VERSION)
+    frame = Mainframe(title=GlobalVars.TITLE + ' ' + GlobalVars.VERSION)
     frame.Show()
     app.MainLoop()
 

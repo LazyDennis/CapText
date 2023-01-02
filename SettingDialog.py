@@ -7,7 +7,8 @@ class SettingDialog(wx.Dialog):
     SIZE = wx.Size(150, -1)
     __main_sizer: wx.BoxSizer
     __setting: dict
-    __cap_dis_set_choices: dict[str:int]
+    __cap_dis_set_choices: dict[int: str]
+    __close_setting_choices : dict[int: str]
     '''
     setting = {
         'language_type': __language_type,
@@ -22,6 +23,7 @@ class SettingDialog(wx.Dialog):
         super().__init__(_parent, wx.ID_ANY, u'设置', size=_size)
         self.__setting = _setting
         self.__cap_dis_set_choices = GlobalVars.CAPTURE_DISPLAY_SETTING
+        self.__close_setting_choices = GlobalVars.CLOSE_SETTING
         self.__InitUI()
 
         return
@@ -31,10 +33,11 @@ class SettingDialog(wx.Dialog):
         self.__hotkey_text_ctrl = self.__InitHotkeySetting()
         self.__lang_type_sel = self.__InitLanguageTypeSelection()
         self.__cap_dis_set = self.__InitCaptrueDisplaySetting()
+        self.__close_setting = self.__InitCloseSetting()
         self.__main_sizer.AddStretchSpacer(1)
         self.__InitDialogButton()
-        self.SetSizer(self.__main_sizer)
-        # self.Fit()
+        self.SetSizerAndFit(self.__main_sizer)
+        
         return
 
     def __InitHotkeySetting(self):
@@ -107,6 +110,26 @@ class SettingDialog(wx.Dialog):
         self.__main_sizer.Add(cap_dis_set_sizer, 0, wx.ALIGN_CENTER)
 
         return cap_dis_set
+    
+    def __InitCloseSetting(self):
+        border = self.BORDER
+        size = self.SIZE
+        close_setting_label = wx.StaticText(self, label=u'关闭方式：')
+        close_setting = wx.RadioBox(self, 
+                                    size=size, 
+                                    majorDimension=1, 
+                                    style=wx.RA_SPECIFY_COLS,
+                                    choices=list(self.__close_setting_choices.values()))
+        close_setting.SetSelection(
+            close_setting.FindString(
+                self.__close_setting_choices[GlobalVars.CLOSE_TO_TASKBAR]))
+        close_setting_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        close_setting_sizer.Add(close_setting_label, 0, wx.ALIGN_CENTER | wx.ALL, border)
+        close_setting_sizer.Add(close_setting, 1, wx.EXPAND | wx.ALL, border)
+        self.__main_sizer.Add(close_setting_sizer, 0, wx.ALIGN_CENTER)
+        
+        return close_setting
+        
 
     def __InitDialogButton(self):
         border = self.BORDER
@@ -154,4 +177,7 @@ class SettingDialog(wx.Dialog):
         self.__setting['capture_all_display'] = Util.GetDictKey(
             self.__cap_dis_set_choices,
             self.__cap_dis_set.GetString(self.__cap_dis_set.GetSelection()))
+        self.__setting['close_setting'] = Util.GetDictKey(
+            self.__close_setting_choices, 
+            self.__close_setting.GetString(self.__close_setting.GetSelection()))
         return self.__setting
