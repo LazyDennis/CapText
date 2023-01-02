@@ -6,8 +6,10 @@ TITLE = 'CapText'
 
 MAIN_VERSION = 1
 SUB_VERSION = 4
-MINOR_VERSION = 1
+MINOR_VERSION = 2
 VERSION = str(MAIN_VERSION) + '.' + str(SUB_VERSION) + '.' + str(MINOR_VERSION)
+
+SETTING_FILE = 'Setting.conf'
 
 ICON_SETTING = {
     'frame_icon_large': (32, 32),
@@ -230,38 +232,6 @@ MENUS = [
     }
 ]
 
-BITMAP_TYPE_MAP ={
-    'bmp' : wx.BITMAP_TYPE_BMP,
-    'jpg' : wx.BITMAP_TYPE_JPEG,
-    'gif' : wx.BITMAP_TYPE_GIF,
-    'tif' : wx.BITMAP_TYPE_TIF,
-    'png' : wx.BITMAP_TYPE_PNG
-}
-
-RECONIZE_LANGUAGE = {
-    '中英混合（默认）': 'CHN_ENG',
-    '日文': 'JAP'
-}
-
-RECONIZE_TYPE = {
-    '百度' : 1
-}
-
-RECONIZE_METHOD = {
-    1: {
-        '_reconize_method': TextReconize.BaiduOcr,
-        '_args': {
-            '_appid': api.APP_ID,
-            '_apikey':  api.API_KEY,
-            '_secretkey':  api.SECRET_KEY,
-            '_options': {
-                'language_type': 'CHN_ENG',
-                'paragraph': True
-            }
-        }
-    }
-}
-
 SLIDER_SETTING = {
     'contrast': {
         'show': True,
@@ -309,6 +279,38 @@ SLIDER_SETTING = {
     }
 }
 
+BITMAP_TYPE_MAP ={
+    'bmp' : wx.BITMAP_TYPE_BMP,
+    'jpg' : wx.BITMAP_TYPE_JPEG,
+    'gif' : wx.BITMAP_TYPE_GIF,
+    'tif' : wx.BITMAP_TYPE_TIF,
+    'png' : wx.BITMAP_TYPE_PNG
+}
+
+RECONIZE_LANGUAGE = {
+    '中英混合（默认）': 'CHN_ENG',
+    '日文': 'JAP'
+}
+
+RECONIZE_TYPE = {
+    '百度' : 1
+}
+
+RECONIZE_METHOD = {
+    1: {
+        '_reconize_method': TextReconize.BaiduOcr,
+        '_args': {
+            '_appid': api.APP_ID,
+            '_apikey':  api.API_KEY,
+            '_secretkey':  api.SECRET_KEY,
+            '_options': {
+                'language_type': 'CHN_ENG',
+                'paragraph': True
+            }
+        }
+    }
+}
+
 CAPTURE_ALL_DISPLAY = 0
 CAPTURE_CURRENT_DISPLAY = 1
 CAPTURE_DISPLAY_SETTING = {
@@ -318,15 +320,17 @@ CAPTURE_DISPLAY_SETTING = {
 
 CLOSE_TO_TASKBAR = 0
 CLOSE_TO_EXIT = 1
+CLOSE_USER_SELECT = 2
 CLOSE_SETTING = {
     CLOSE_TO_TASKBAR: u'最小化到系统托盘',
-    CLOSE_TO_EXIT: u'退出' + TITLE
+    CLOSE_TO_EXIT: u'退出' + TITLE,
+    CLOSE_USER_SELECT: u'退出时选择'
 }
 
 DEFAULT_SETTING = {
             'hotkey': 'D',
             'language_type': RECONIZE_LANGUAGE[u'中英混合（默认）'],
             'capture_all_display': CAPTURE_ALL_DISPLAY, # 0 for all, 1 for current
-            'allowed_close_prompt': True,
-            'close_setting': CLOSE_TO_TASKBAR, # True for close to taskbar, False for close to exit
+            # 'allowed_close_prompt': True,
+            'close_setting': CLOSE_USER_SELECT, # True for close to taskbar, False for close to exit
 }

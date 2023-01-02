@@ -1,3 +1,5 @@
+from wx.adv import TaskBarIcon
+import wx.adv
 import wx
 from GrabFrame import GrabFrame
 from SettingDialog import SettingDialog
@@ -5,6 +7,7 @@ from io import BytesIO
 import Util
 from threading import Thread, Lock
 from ImageTuningPanel import ImageTuningPanel
+from Setting import Setting
 
 import GlobalVars
 
@@ -24,6 +27,7 @@ class Mainframe(wx.Frame):
     __reconize_method: dict = None
     __setting: dict = {}
     __tuning_panel: ImageTuningPanel = None
+    __setting_file = GlobalVars.SETTING_FILE
     # __language_type: str
 
     def __init__(self, title):
@@ -52,9 +56,18 @@ class Mainframe(wx.Frame):
             }
         }
 
-        self.__setting = GlobalVars.DEFAULT_SETTING
+        self.__setting = self.__InitSetting()
 
         self.__InitUi()
+
+        self.__ApplySetting()
+        self.Bind(wx.EVT_SIZE, self.__OnResize)
+        self.Bind(wx.EVT_CLOSE, self.__OnClose)
+        # self.Bind(wx.EVT_ICONIZE, self.__OnIconize)
+        self.Bind(wx.EVT_MOVING, self.__OnMoving)
+
+    def __InitSetting(self):
+        return Setting.ReadSettingFromFile(self.__setting_file)
 
     def __InitUi(self):
         # self.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
@@ -78,9 +91,9 @@ class Mainframe(wx.Frame):
         self.__main_sizer.Add(self.__InitRecognizeResPanel(), 1, wx.EXPAND)
 
         self.__status_bar = self.__InitStatusBar()
-        
+
         self.__taskbar_icon = MainframeIcon(self)
-        
+
         self.SetSizer(self.__main_sizer)
         self.Center()
         # color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
@@ -88,12 +101,6 @@ class Mainframe(wx.Frame):
         # self.__toolbar.SetBackgroundColour(color)
         # self.SetBackgroundColour(color)
         # self.__status_bar.SetBackgroundColour(color)
-
-        self.__ApplySetting()
-        self.Bind(wx.EVT_SIZE, self.__OnResize)
-        self.Bind(wx.EVT_CLOSE, self.__OnClose)
-        # self.Bind(wx.EVT_ICONIZE, self.__OnIconize)
-        self.Bind(wx.EVT_MOVING, self.__OnMoving)
 
     def __InitMenu(self):
         menu_bar = wx.MenuBar()
@@ -170,18 +177,18 @@ class Mainframe(wx.Frame):
                                          style=wx.TE_MULTILINE | wx.TE_LEFT)
         self.__result_text.Bind(wx.EVT_CHAR, self.__OnChar)
         return self.__result_text
-    
+
     def __InitStatusBar(self):
-        status_bar : wx.StatusBar = self.CreateStatusBar()
+        status_bar: wx.StatusBar = self.CreateStatusBar()
         status_bar.SetFieldsCount(2, [-1, 250])
-        
+
         # status_text = u'当前识别语言：'
         # for key, val in GlobalVars.RECONIZE_LANGUAGE.items():
         #     if val == self.__language_type:
         #         status_text += key
         #         break
         # status_bar.SetStatusText(status_text, 1)
-        
+
         return status_bar
 
     def __OnNew(self, _evt):
@@ -248,20 +255,21 @@ class Mainframe(wx.Frame):
         return path
 
     def __OnExit(self, _evt):
-        self.Close()
+        wx.Exit()
         return
 
     def __OnCapture(self, _evt):
         self.__OnNew(None)
+
         def GetDisplayRects(display: wx.Display):
             mode: wx.VideoMode = display.GetCurrentMode()
             show_rect: wx.Rect = display.GetGeometry()
             real_w, real_h = mode.w, mode.h
-            real_x = real_w * (show_rect.GetX() != 0) 
+            real_x = real_w * (show_rect.GetX() != 0)
             real_y = real_h * (show_rect.GetY() != 0)
             cap_rect: wx.Rect = wx.Rect(real_x, real_y, real_w, real_h)
             return show_rect, cap_rect
-        
+
         if self.__setting['capture_all_display'] == GlobalVars.CAPTURE_ALL_DISPLAY:
             show_rects: list[wx.Rect] = []
             cap_rects: list[wx.Rect] = []
@@ -270,8 +278,8 @@ class Mainframe(wx.Frame):
                 show_rect, cap_rect = GetDisplayRects(display)
                 show_rects.append(show_rect)
                 cap_rects.append(cap_rect)
-            
-            def SumRects(rects: list[wx.Rect]):            
+
+            def SumRects(rects: list[wx.Rect]):
                 if rects:
                     res_rect = wx.Rect(0, 0, 0, 0)
                     for rect in rects:
@@ -279,13 +287,13 @@ class Mainframe(wx.Frame):
                     return res_rect
                 else:
                     return None
-            
+
             show_sum_rect: wx.Rect = SumRects(show_rects)
             cap_sum_rect: wx.Rect = SumRects(cap_rects)
         else:
             display = wx.Display(self)
             show_sum_rect, cap_sum_rect = GetDisplayRects(display)
-        
+
         '''For debugging'''
         # display_pos_x_min = 0
         # display_pos_y_min = 0
@@ -298,13 +306,14 @@ class Mainframe(wx.Frame):
         if not self.IsShown():
             wx.MilliSleep(250)
             screen_bitmap = self.__GetScreenBmp(
-            cap_sum_rect.GetSize(), cap_sum_rect.GetPosition())         
+                cap_sum_rect.GetSize(), cap_sum_rect.GetPosition())
             wx.Bitmap.Rescale(screen_bitmap, show_sum_rect.GetSize())
             self.__grab_frame: GrabFrame = GrabFrame(
                 self, screen_bitmap, show_sum_rect.GetSize(),
                 show_sum_rect.GetPosition())
             self.__grab_frame.Bind(wx.EVT_SHOW, self.__OnGrabFrameHidden)
-            self.__grab_frame.Bind(wx.EVT_CHAR, self.__OnChar)  # TODO: 转移至GramFrame类中绑定
+            # TODO: 转移至GramFrame类中绑定
+            self.__grab_frame.Bind(wx.EVT_CHAR, self.__OnChar)
             self.__grab_frame.Bind(wx.EVT_RIGHT_UP, self.__OnKeyEsc)
         return
 
@@ -319,9 +328,9 @@ class Mainframe(wx.Frame):
             self.__setting = self.__setting_dialog.GetSetting()
             self.__ApplySetting()
         self.__setting_dialog.Close()
-        
+
         return
-    
+
     def __OnHelp(self, _evt):
 
         return
@@ -431,7 +440,8 @@ class Mainframe(wx.Frame):
         if not self.__grab_frame.IsShown():
             self.Show()
             if self.__tuning_panel:
-                self.__tuning_panel.Show(self.__tuning_panel.GetTool().IsToggled())
+                self.__tuning_panel.Show(
+                    self.__tuning_panel.GetTool().IsToggled())
             self.__grab_frame.Close()
         return
 
@@ -445,16 +455,16 @@ class Mainframe(wx.Frame):
 
     def GetStatusLock(self):
         return self.__status_bar_lock
-    
+
     def __OnClose(self, _evt: wx.CloseEvent):
-        if self.__setting['allowed_close_prompt']:
+        if self.__setting['close_setting'] == GlobalVars.CLOSE_USER_SELECT:
             from CloseDialog import CloseDialog
             close_dialog = CloseDialog(self, self.__setting)
             res = close_dialog.ShowModal()
             if res == wx.ID_OK:
                 close_setting = close_dialog.GetSetting()
                 if not close_setting['allowed_prompt']:
-                    self.__setting['allowed_close_prompt'] = False
+                    # self.__setting['allowed_close_prompt'] = False
                     self.__setting['close_setting'] = close_setting['close_setting']
                 setting = close_setting['close_setting']
             else:
@@ -462,6 +472,7 @@ class Mainframe(wx.Frame):
                 return
         else:
             setting = self.__setting['close_setting']
+        self.__ApplySetting()
 
         if setting == GlobalVars.CLOSE_TO_TASKBAR:
             self.Iconize(True)
@@ -472,15 +483,17 @@ class Mainframe(wx.Frame):
                 self.__taskbar_icon.Destroy()
             _evt.Skip()
         return
-        
-    def __OnIconize(self, _evt: wx.IconizeEvent):
-        if self.__taskbar_icon:
-            self.Iconize(True)
-            # self.Hide()
 
-        return
+    # def __OnIconize(self, _evt: wx.IconizeEvent):
+    #     if self.__taskbar_icon:
+    #         self.Iconize(True)
+    #         # self.Hide()
+
+    #     return
 
     def __ApplySetting(self):
+        if self.__setting != GlobalVars.DEFAULT_SETTING:
+            Setting.SaveSettingToFile(self.__setting, self.__setting_file)
         self.__SetStatusBarText()
         self.__SetHotkey()
         return
@@ -496,11 +509,12 @@ class Mainframe(wx.Frame):
 
     def __SetHotkey(self):
         if 'hotkey' in self.__setting and self.__setting['hotkey']:
-            self.RegisterHotKey(0, wx.MOD_CONTROL | wx.MOD_ALT, ord(self.__setting['hotkey']))
-            self.Bind(wx.EVT_HOTKEY, self.__OnHotkey, id = 0)
+            self.RegisterHotKey(0, wx.MOD_CONTROL | wx.MOD_ALT,
+                                ord(self.__setting['hotkey']))
+            self.Bind(wx.EVT_HOTKEY, self.__OnHotkey, id=0)
         else:
             self.UnregisterHotKey(0)
-            self.Unbind(wx.EVT_HOTKEY, id = 0)
+            self.Unbind(wx.EVT_HOTKEY, id=0)
             pass
         return
 
@@ -508,17 +522,18 @@ class Mainframe(wx.Frame):
         self.__OnCapture(None)
         if self.IsIconized():
             self.Iconize(False)
-        
+
         self.Raise()
         return
-    
+
     def __OnImageEnhance(self, _evt: wx.CommandEvent):
         tool: wx.ToolBarToolBase = self.__toolbar.FindById(_evt.GetId())
         if self.__tuning_panel is None:
             self.__tuning_panel = ImageTuningPanel(self, tool)
-            pos:wx.Point = self.GetPosition()
+            pos: wx.Point = self.GetPosition()
             panel_size = self.__tuning_panel.GetSize()
-            self.__tuning_panel.SetPosition(wx.Point(pos.x - panel_size.GetWidth(), pos.y))
+            self.__tuning_panel.SetPosition(
+                wx.Point(pos.x - panel_size.GetWidth(), pos.y))
         else:
             self.__tuning_panel.Show(not self.__tuning_panel.IsShown())
             tool.Toggle(self.__tuning_panel.IsShown())
@@ -526,7 +541,7 @@ class Mainframe(wx.Frame):
 
     def GetRawBitmap(self) -> wx.Bitmap:
         return self.__raw_bitmap
-    
+
     def SetResultBitmap(self, _bitmap: wx.Bitmap):
         self.__result_bitmap = _bitmap
         return
@@ -536,14 +551,14 @@ class Mainframe(wx.Frame):
 
     def __OnMoving(self, _evt):
         if self.__tuning_panel:
-            frame_pos : wx.Point = self.GetPosition()
+            frame_pos: wx.Point = self.GetPosition()
             tuning_size: wx.Size = self.__tuning_panel.GetSize()
-            self.__tuning_panel.SetPosition(wx.Point(frame_pos.x - tuning_size.GetWidth(), frame_pos.y))
+            self.__tuning_panel.SetPosition(
+                wx.Point(frame_pos.x - tuning_size.GetWidth(), frame_pos.y))
         if _evt:
             _evt.Skip()
         return
 
-    
 
 class TextReconizeThread(Thread):
 
@@ -577,20 +592,16 @@ class TextReconizeThread(Thread):
         return self.__is_reconizing
 
 
-
-    
-import wx.adv
-from wx.adv import TaskBarIcon
-
 class MainframeIcon(TaskBarIcon):
-    def __init__(self, _main_frame : Mainframe):
+    def __init__(self, _main_frame: Mainframe):
         super().__init__()
         self.__main_frame = _main_frame
         self.SetIcon(self.__main_frame.GetIcon(), self.__main_frame.GetTitle())
-        self.Bind(wx.adv.EVT_TASKBAR_LEFT_DCLICK, self.__OnTaskbarLeftDoubleClick)
-        
+        self.Bind(wx.adv.EVT_TASKBAR_LEFT_DCLICK,
+                  self.__OnTaskbarLeftDoubleClick)
+
         return
-        
+
     def __OnTaskbarLeftDoubleClick(self, _evt):
         self.__main_frame.Iconize(not self.__main_frame.IsIconized())
         if not self.__main_frame.IsShown():
@@ -598,5 +609,5 @@ class MainframeIcon(TaskBarIcon):
             self.__main_frame.Raise()
         else:
             self.__main_frame.Show(False)
-            
+
         return

@@ -122,7 +122,7 @@ class SettingDialog(wx.Dialog):
                                     choices=list(self.__close_setting_choices.values()))
         close_setting.SetSelection(
             close_setting.FindString(
-                self.__close_setting_choices[GlobalVars.CLOSE_TO_TASKBAR]))
+                self.__close_setting_choices[self.__setting['close_setting']]))
         close_setting_sizer = wx.BoxSizer(wx.HORIZONTAL)
         close_setting_sizer.Add(close_setting_label, 0, wx.ALIGN_CENTER | wx.ALL, border)
         close_setting_sizer.Add(close_setting, 1, wx.EXPAND | wx.ALL, border)
