@@ -40,10 +40,10 @@ class Mainframe(wx.Frame):
             '__OnOpenImage': self.__OnOpenImage,
             '__OnSaveCapture': self.__OnSaveCapture,
             '__OnSaveText': self.__OnSaveText,
-            '__OnExit': self.__OnExit,
-            '__OnCapture': self.__OnCapture,
+            '__OnExit': self.OnExit,
+            '__OnCapture': self.OnCapture,
             '__OnRecognize': self.__OnRecognize,
-            '__OnSetting': self.__OnSetting,
+            '__OnSetting': self.OnSetting,
             '__OnImageEnhance': self.__OnImageEnhance,
             '__OnHelp': self.__OnHelp,
             '__OnAbout': self.__OnAbout
@@ -254,26 +254,38 @@ class Mainframe(wx.Frame):
         dialog.Destroy()
         return path
 
-    def __OnExit(self, _evt):
+    def OnExit(self, _evt):
+        do_exit = None
+        
         if wx.MessageBox(u'是否退出程序？', 
                          u'退出提示', 
                          wx.YES_NO 
-                         | wx.YES_DEFAULT 
+                         | wx.NO_DEFAULT 
                          | wx.CENTER 
                          | wx.ICON_QUESTION, 
-                         self) == wx.ID_YES:
+                         self) == wx.YES:
             wx.Exit()
-        return
+            do_exit = True
+        else:
+            do_exit = False
+        return do_exit
 
-    def __OnCapture(self, _evt):
+    def OnCapture(self, _evt):
         self.__OnNew(None)
 
         def GetDisplayRects(display: wx.Display):
             mode: wx.VideoMode = display.GetCurrentMode()
             show_rect: wx.Rect = display.GetGeometry()
+            show_x, show_y = show_rect.GetPosition()
             real_w, real_h = mode.w, mode.h
-            real_x = real_w * (show_rect.GetX() != 0)
-            real_y = real_h * (show_rect.GetY() != 0)
+            if show_x:
+                real_x = real_w * (abs(show_x) / show_x)
+            else:
+                real_x = 0
+            if show_y:
+                real_y = real_h * (abs(show_y) / show_y)
+            else:
+                real_y = 0
             cap_rect: wx.Rect = wx.Rect(real_x, real_y, real_w, real_h)
             return show_rect, cap_rect
 
@@ -329,7 +341,7 @@ class Mainframe(wx.Frame):
             self.__TextRecognize(self.__result_bitmap)
         return
 
-    def __OnSetting(self, _evt):
+    def OnSetting(self, _evt):
         self.__setting_dialog = SettingDialog(self, self.__setting, (400, -1))
         if self.__setting_dialog.ShowModal() == wx.ID_OK:
             self.__setting = self.__setting_dialog.GetSetting()
@@ -485,12 +497,14 @@ class Mainframe(wx.Frame):
             self.Iconize(True)
             self.Hide()
             _evt.Veto()
-        else:
-            if self.__taskbar_icon:
-                self.__taskbar_icon.Destroy()
-            self.__OnExit(None)
-            _evt.Skip()
-        return
+        else:            
+            if self.OnExit(None):
+                if self.__taskbar_icon:
+                    self.__taskbar_icon.Destroy()
+                _evt.Skip()
+            else:
+                _evt.Veto()
+            return
 
     # def __OnIconize(self, _evt: wx.IconizeEvent):
     #     if self.__taskbar_icon:
@@ -500,8 +514,8 @@ class Mainframe(wx.Frame):
     #     return
 
     def __ApplySetting(self):
-        if self.__setting != GlobalVars.DEFAULT_SETTING:
-            Setting.SaveSettingToFile(self.__setting, self.__setting_file)
+        # if self.__setting != GlobalVars.DEFAULT_SETTING:
+        Setting.SaveSettingToFile(self.__setting, self.__setting_file)
         self.__SetStatusBarText()
         self.__SetHotkey()
         return
@@ -527,7 +541,7 @@ class Mainframe(wx.Frame):
         return
 
     def __OnHotkey(self, _evt):
-        self.__OnCapture(None)
+        self.OnCapture(None)
         if self.IsIconized():
             self.Iconize(False)
 
@@ -601,13 +615,48 @@ class TextReconizeThread(Thread):
 
 
 class MainframeIcon(TaskBarIcon):
+    __main_menu : dict = GlobalVars.MENUS
+    __icon_menu : dict ={
+        GlobalVars.ID_SHOW: None,
+        GlobalVars.ID_CAPTURE: None,
+        GlobalVars.ID_SETTING: None,
+        wx.ID_SEPARATOR: None,
+        GlobalVars.ID_EXIT:None
+    }
     def __init__(self, _main_frame: Mainframe):
         super().__init__()
         self.__main_frame = _main_frame
+        self.__handler_map = {
+            '__OnShow': self.__OnShow,
+            '__OnExit': self.__main_frame.OnExit,
+            '__OnCapture': self.__OnCapture,
+            '__OnSetting': self.__OnSetting
+        }
         self.SetIcon(self.__main_frame.GetIcon(), self.__main_frame.GetTitle())
+        self.__InitMenu()
         self.Bind(wx.adv.EVT_TASKBAR_LEFT_DCLICK,
                   self.__OnTaskbarLeftDoubleClick)
+        self.Bind(wx.adv.EVT_TASKBAR_RIGHT_UP, self.__OnTaskbarRightUp)
 
+        return
+
+    def GetPopupMenu(self):
+        return self.__menu
+
+    def __InitMenu(self):
+        self.__menu = wx.Menu()
+        for main_menu in self.__main_menu:
+            for item in main_menu['menu_items']:
+                if item['property']['id'] in self.__icon_menu and \
+                   self.__icon_menu[item['property']['id']] is None:
+                    self.__icon_menu[item['property']['id']] = item
+        for key, value in  self.__icon_menu.items():
+            menu_item = wx.MenuItem(**value['property'])
+            self.__menu.Append(menu_item)
+            if 'handler' in value and value['handler']:
+                handler = self.__handler_map[value['handler']]
+                self.Bind(wx.EVT_MENU, handler, id=key)
+        
         return
 
     def __OnTaskbarLeftDoubleClick(self, _evt):
@@ -618,4 +667,23 @@ class MainframeIcon(TaskBarIcon):
         else:
             self.__main_frame.Show(False)
 
+        return
+
+    def __OnTaskbarRightUp(self, _evt):
+        self.PopupMenu(self.__menu)
+        return
+
+    def __OnShow(self, _evt):
+        self.__main_frame.Iconize(False)
+        self.__main_frame.Show(True)
+        return
+
+    def __OnCapture(self, _evt):
+        self.__OnShow(None)
+        self.__main_frame.OnCapture(_evt)
+        return
+
+    def __OnSetting(self, _evt):
+        self.__OnShow(None)
+        self.__main_frame.OnSetting(_evt)
         return

@@ -7,38 +7,36 @@ from PIL import ImageEnhance
 class ImageTuningPanel(wx.Dialog):
     sliders_settings = GlobalVars.SLIDER_SETTING
     sliders: dict = {}
-    
+
     def __init__(self, _parent, _tool, _pos=wx.DefaultPosition):
         super().__init__(_parent,
-                         style=
-                         wx.CAPTION | 
-                        #  wx.CLOSE_BOX | 
+                         style=wx.CAPTION |
+                         #  wx.CLOSE_BOX |
                          wx.FRAME_TOOL_WINDOW |
                          wx.FRAME_FLOAT_ON_PARENT |
-                         wx.FRAME_NO_TASKBAR,# |
-                        #  wx.CLIP_CHILDREN,
+                         wx.FRAME_NO_TASKBAR,  # |
+                         #  wx.CLIP_CHILDREN,
                          pos=_pos)
         self.slider_methods = {
-                'contrast': ImageEnhance.Contrast,
-                'color': ImageEnhance.Color,
-                'brightness': ImageEnhance.Brightness,
-                'sharpness': ImageEnhance.Sharpness
-            }
+            'contrast': ImageEnhance.Contrast,
+            'color': ImageEnhance.Color,
+            'brightness': ImageEnhance.Brightness,
+            'sharpness': ImageEnhance.Sharpness
+        }
         self.__tool: wx.ToolBarToolBase = _tool
         self.__tool.SetToggle(True)
         self.__tool.Toggle(True)
         self.__InitUi()
         # self.Bind(wx.EVT_CLOSE, self.__OnClose)
 
-
     def __InitUi(self):
         self.__main_sizer = wx.BoxSizer(wx.VERTICAL)
 
         slider_sizer = self.__InitSliders()
-     
+
         self.__main_sizer.Add(slider_sizer, 0, wx.EXPAND)
         self.__default_button = self.__InitButton()
-        
+
         self.Show()
         self.SetSizerAndFit(self.__main_sizer)
         return
@@ -50,8 +48,8 @@ class ImageTuningPanel(wx.Dialog):
             sl_sizer = wx.BoxSizer(wx.HORIZONTAL)
             label = wx.StaticText(self, wx.ID_ANY, sl_val['text'])
             slider = wx.Slider(self, **sl_val['property'])
-            text_ctrl = wx.TextCtrl(self, 
-                                    value=str(slider.GetValue()), 
+            text_ctrl = wx.TextCtrl(self,
+                                    value=str(slider.GetValue()),
                                     size=(30, -1),
                                     style=wx.TE_PROCESS_ENTER)
             sl_sizer.AddMany([
@@ -61,8 +59,10 @@ class ImageTuningPanel(wx.Dialog):
             ])
             slider_sizer.Add(sl_sizer, 0, wx.EXPAND)
             self.sliders[sl_key] = {'slider': slider, 'text_ctrl': text_ctrl}
-            slider.Bind(wx.EVT_SLIDER, lambda evt, sl_key=sl_key : self.__OnSlide(_evt=evt, _slkey=sl_key))
-            text_ctrl.Bind(wx.EVT_TEXT_ENTER, lambda evt, sl_key=sl_key: self.__OnTextEnter(evt, sl_key))
+            slider.Bind(wx.EVT_SLIDER, lambda evt,
+                        sl_key=sl_key: self.__OnSlide(_evt=evt, _slkey=sl_key))
+            text_ctrl.Bind(wx.EVT_TEXT_ENTER, lambda evt,
+                           sl_key=sl_key: self.__OnTextEnter(evt, sl_key))
         return slider_sizer
 
     def __InitButton(self):
@@ -84,11 +84,13 @@ class ImageTuningPanel(wx.Dialog):
                 min_val = sl_val['slider'].GetMin()
                 val = sl_val['slider'].GetValue()
                 mid_val = (max_val - min_val) / 2 if min_val >= 0 else 0
-                ratio = 1 / (mid_val - min_val) #self.sliders_settings[sl_key]['ratio']
+                # self.sliders_settings[sl_key]['ratio']
+                ratio = 1 / (mid_val - min_val)
                 factor = (val - min_val) / ratio
                 pil_enhance = self.slider_methods[_slkey](pil_image)
                 pil_image = pil_enhance.enhance(factor)
-            self.Parent.SetResultBitmap(Util.PilImage2WxImage(pil_image).ConvertToBitmap())
+            self.Parent.SetResultBitmap(
+                Util.PilImage2WxImage(pil_image).ConvertToBitmap())
             self.Parent.SetCaptureBitmap(self.Parent.GetResultBitmap())
         return
 
@@ -101,19 +103,21 @@ class ImageTuningPanel(wx.Dialog):
 
     def __OnSetDefault(self, _evt):
         self.SetDefault()
-        
+
     def SetDefault(self):
-        raw_bitmap = self.Parent.GetRawBitmap()
-        self.Parent.SetCaptureBitmap(raw_bitmap if raw_bitmap else wx.NullBitmap)
+        raw_bitmap: wx.Bitmap = self.Parent.GetRawBitmap()
+        self.Parent.SetResultBitmap(wx.Bitmap(raw_bitmap))
+        self.Parent.SetCaptureBitmap(
+            wx.Bitmap(raw_bitmap if raw_bitmap else wx.NullBitmap))
         for key, val in self.sliders.items():
             default_value = self.sliders_settings[key]['property']['value']
             val['slider'].SetValue(default_value)
             val['text_ctrl'].SetValue(str(default_value))
         return
-    
-    def GetTool(self)-> wx.ToolBarToolBase:
+
+    def GetTool(self) -> wx.ToolBarToolBase:
         return self.__tool
-        
+
     # def __OnClose(self, _evt):
     #     # self.Hide()
     #     print(self.__tool.IsToggled())
@@ -121,4 +125,3 @@ class ImageTuningPanel(wx.Dialog):
     #     print(self.__tool.SetToggle(False))
     #     _evt.Veto()
     #     return
-        

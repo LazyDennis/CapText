@@ -18,6 +18,18 @@ ICON_SETTING = {
     'toolbar_icon': (30, 30)
 }
 
+ID_NEW = 100
+ID_OPEN = 101
+ID_SAVE_CAPTURE = 102
+ID_SAVE_TEXT = 103
+ID_SHOW = 108 
+ID_EXIT = 109
+ID_CAPTURE = 110
+ID_PIC_ENHANCE = 113
+ID_RECONIZE = 111
+ID_SETTING = 112
+ID_HELP = 130
+ID_ABOUT = 131
 MENUS = [
     {
         'title': u'文件(&F)',
@@ -27,7 +39,7 @@ MENUS = [
             {
                 'property':
                 {
-                    'id': 100,
+                    'id': ID_NEW,
                     'text': u'新建\tCTRL+&N',
                     'helpString': u'新建截图',
                     'kind': wx.ITEM_NORMAL
@@ -41,7 +53,7 @@ MENUS = [
             {
                 'property':
                 {
-                    'id': 101,
+                    'id': ID_OPEN,
                     'text': u'打开图片\tCTRL+&O',
                     'helpString': u'打开已有图片',
                     'kind': wx.ITEM_NORMAL
@@ -61,7 +73,7 @@ MENUS = [
             {
                 'property':
                 {
-                    'id': 102,
+                    'id': ID_SAVE_CAPTURE,
                     'text': u'保存截图\tCTRL+&P',
                     'helpString': u'保存当前截图',
                     'kind': wx.ITEM_NORMAL
@@ -85,7 +97,7 @@ MENUS = [
             {
                 'property':
                 {
-                    'id': 103,
+                    'id': ID_SAVE_TEXT,
                     'text': u'保存文本\tCTRL+&S',
                     'helpString': u'保存识别文本',
                     'kind': wx.ITEM_NORMAL
@@ -105,14 +117,30 @@ MENUS = [
             {
                 'property':
                 {
-                    'id': wx.ID_SEPARATOR
+                    'id': ID_SHOW,
+                    'text': u'显示程序',
+                    'helpString': u'显示程序',
+                    'kind': wx.ITEM_NORMAL
                 },
                 'show_on_screen': True,
+                'icon': None,
+                'handler': '__OnShow',
+                'toolbartool': False,
+                'menutool': False,
+                'iconmenu': True
             },
             {
                 'property':
                 {
-                    'id': 109,
+                    'id': wx.ID_SEPARATOR
+                },
+                'show_on_screen': True,
+                'iconmenu': True
+            },
+            {
+                'property':
+                {
+                    'id': ID_EXIT,
                     'text': u'退出\tCTRL+&E',
                     'helpString': u'退出程序',
                     'kind': wx.ITEM_NORMAL
@@ -121,7 +149,8 @@ MENUS = [
                 'icon': u'退出_logout.png',
                 'handler': '__OnExit',
                 'toolbartool': True,
-                'menutool': True
+                'menutool': True,
+                'iconmenu': True
             }
         ]
     },
@@ -133,7 +162,7 @@ MENUS = [
             {
                 'property':
                 {
-                    'id': 110,
+                    'id': ID_CAPTURE,
                     'text': u'截图\tCTRL+&W',
                     'helpString': u'获取截图',
                     'kind': wx.ITEM_NORMAL
@@ -142,12 +171,13 @@ MENUS = [
                 'icon': u'截图_screenshot-one.png',
                 'handler': '__OnCapture',
                 'toolbartool': True,
-                'menutool': True
+                'menutool': True,
+                'iconmenu': True
             },
             {
                 'property':
                 {
-                    'id': 113,
+                    'id': ID_PIC_ENHANCE,
                     'text': u'图像增强\tCTRL+&T',
                     'helpString': u'调整图像',
                     'kind': wx.ITEM_NORMAL
@@ -156,12 +186,12 @@ MENUS = [
                 'icon': u'均衡器_equalizer.png',
                 'handler': '__OnImageEnhance',
                 'toolbartool': True,
-                'menutool': True
+                'menutool': True,
             },
             {
                 'property':
                 {
-                    'id': 111,
+                    'id': ID_RECONIZE,
                     'text': u'识别\tCTRL+&R',
                     'helpString': u'识别当前截图',
                     'kind': wx.ITEM_NORMAL
@@ -182,7 +212,7 @@ MENUS = [
             {
                 'property':
                 {
-                    'id': 112,
+                    'id': ID_SETTING,
                     'text': u'设定\tCTRL+&I',
                     'helpString': u'变更设定',
                     'kind': wx.ITEM_NORMAL
@@ -191,7 +221,8 @@ MENUS = [
                 'icon': u'设置_setting-two.png',
                 'handler': '__OnSetting',
                 'toolbartool': True,
-                'menutool': True
+                'menutool': True,
+                'iconmenu': True
             }
         ]
     },
@@ -203,7 +234,7 @@ MENUS = [
             {
                 'property':
                 {
-                    'id': 130,
+                    'id': ID_HELP,
                     'text': u'帮助\tCTRL+&H',
                     'helpString': u'获取帮助',
                     'kind': wx.ITEM_NORMAL
@@ -217,7 +248,7 @@ MENUS = [
             {
                 'property':
                 {
-                    'id': 131,
+                    'id': ID_ABOUT,
                     'text': u'关于',
                     'helpString': u'关于',
                     'kind': wx.ITEM_NORMAL
