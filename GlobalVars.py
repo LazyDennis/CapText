@@ -6,7 +6,7 @@ TITLE = 'CapText'
 
 MAIN_VERSION = 1
 SUB_VERSION = 4
-MINOR_VERSION = 2
+MINOR_VERSION = 3
 VERSION = str(MAIN_VERSION) + '.' + str(SUB_VERSION) + '.' + str(MINOR_VERSION)
 
 SETTING_FILE = 'Setting.conf'
@@ -362,6 +362,6 @@ DEFAULT_SETTING = {
             'hotkey': 'D',
             'language_type': RECONIZE_LANGUAGE[u'中英混合（默认）'],
             'capture_all_display': CAPTURE_ALL_DISPLAY, # 0 for all, 1 for current
-            # 'allowed_close_prompt': True,
             'close_setting': CLOSE_USER_SELECT, # True for close to taskbar, False for close to exit
+            'minimize_to_taskbar': False
 }

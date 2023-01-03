@@ -60,10 +60,10 @@ class Mainframe(wx.Frame):
 
         self.__InitUi()
 
-        self.__ApplySetting()
+        self.ApplySetting()
         self.Bind(wx.EVT_SIZE, self.__OnResize)
         self.Bind(wx.EVT_CLOSE, self.__OnClose)
-        # self.Bind(wx.EVT_ICONIZE, self.__OnIconize)
+        self.Bind(wx.EVT_ICONIZE, self.__OnIconize)
         self.Bind(wx.EVT_MOVING, self.__OnMoving)
 
     def __InitSetting(self):
@@ -92,7 +92,7 @@ class Mainframe(wx.Frame):
 
         self.__status_bar = self.__InitStatusBar()
 
-        self.__taskbar_icon = MainframeIcon(self)
+        self.__taskbar_icon = MainframeIcon(self, self.__setting)
 
         self.SetSizer(self.__main_sizer)
         self.Center()
@@ -264,6 +264,8 @@ class Mainframe(wx.Frame):
                          | wx.CENTER 
                          | wx.ICON_QUESTION, 
                          self) == wx.YES:
+            if self.__taskbar_icon:
+                self.__taskbar_icon.Destroy()
             wx.Exit()
             do_exit = True
         else:
@@ -345,7 +347,7 @@ class Mainframe(wx.Frame):
         self.__setting_dialog = SettingDialog(self, self.__setting, (400, -1))
         if self.__setting_dialog.ShowModal() == wx.ID_OK:
             self.__setting = self.__setting_dialog.GetSetting()
-            self.__ApplySetting()
+            self.ApplySetting()
         self.__setting_dialog.Close()
 
         return
@@ -491,7 +493,7 @@ class Mainframe(wx.Frame):
                 return
         else:
             setting = self.__setting['close_setting']
-        self.__ApplySetting()
+        self.ApplySetting()
 
         if setting == GlobalVars.CLOSE_TO_TASKBAR:
             self.Iconize(True)
@@ -499,21 +501,18 @@ class Mainframe(wx.Frame):
             _evt.Veto()
         else:            
             if self.OnExit(None):
-                if self.__taskbar_icon:
-                    self.__taskbar_icon.Destroy()
                 _evt.Skip()
             else:
                 _evt.Veto()
             return
 
-    # def __OnIconize(self, _evt: wx.IconizeEvent):
-    #     if self.__taskbar_icon:
-    #         self.Iconize(True)
-    #         # self.Hide()
+    def __OnIconize(self, _evt: wx.IconizeEvent):
+        if self.__setting['minimize_to_taskbar']:
+            self.Show(not self.IsShown())
+        _evt.Skip()
+        return
 
-    #     return
-
-    def __ApplySetting(self):
+    def ApplySetting(self):
         # if self.__setting != GlobalVars.DEFAULT_SETTING:
         Setting.SaveSettingToFile(self.__setting, self.__setting_file)
         self.__SetStatusBarText()
@@ -615,25 +614,30 @@ class TextReconizeThread(Thread):
 
 
 class MainframeIcon(TaskBarIcon):
+    ID_MINIMIZE_TO_TASKBAR = 900
     __main_menu : dict = GlobalVars.MENUS
     __icon_menu : dict ={
         GlobalVars.ID_SHOW: None,
+        ID_MINIMIZE_TO_TASKBAR: None,
         GlobalVars.ID_CAPTURE: None,
         GlobalVars.ID_SETTING: None,
         wx.ID_SEPARATOR: None,
         GlobalVars.ID_EXIT:None
     }
-    def __init__(self, _main_frame: Mainframe):
+    def __init__(self, _main_frame: Mainframe, _setting):
         super().__init__()
         self.__main_frame = _main_frame
+        self.__setting = _setting
         self.__handler_map = {
             '__OnShow': self.__OnShow,
+            '__OnCheckMinimzieToTaskBar': self.__OnCheckMinimzieToTaskBar,
             '__OnExit': self.__main_frame.OnExit,
             '__OnCapture': self.__OnCapture,
             '__OnSetting': self.__OnSetting
         }
         self.SetIcon(self.__main_frame.GetIcon(), self.__main_frame.GetTitle())
         self.__InitMenu()
+        
         self.Bind(wx.adv.EVT_TASKBAR_LEFT_DCLICK,
                   self.__OnTaskbarLeftDoubleClick)
         self.Bind(wx.adv.EVT_TASKBAR_RIGHT_UP, self.__OnTaskbarRightUp)
@@ -650,13 +654,25 @@ class MainframeIcon(TaskBarIcon):
                 if item['property']['id'] in self.__icon_menu and \
                    self.__icon_menu[item['property']['id']] is None:
                     self.__icon_menu[item['property']['id']] = item
+        self.__icon_menu[self.ID_MINIMIZE_TO_TASKBAR] = {
+                'property':
+                {
+                    'id': self.ID_MINIMIZE_TO_TASKBAR,
+                    'text': u'最小化到系统托盘',
+                    'helpString': u'最小化到系统托盘',
+                    'kind': wx.ITEM_CHECK
+                },
+                'show_on_screen': True,
+                'handler': '__OnCheckMinimzieToTaskBar'
+            }
         for key, value in  self.__icon_menu.items():
             menu_item = wx.MenuItem(**value['property'])
             self.__menu.Append(menu_item)
             if 'handler' in value and value['handler']:
                 handler = self.__handler_map[value['handler']]
                 self.Bind(wx.EVT_MENU, handler, id=key)
-        
+            if key == self.ID_MINIMIZE_TO_TASKBAR:
+                menu_item.Check(self.__setting['minimize_to_taskbar'])        
         return
 
     def __OnTaskbarLeftDoubleClick(self, _evt):
@@ -686,4 +702,10 @@ class MainframeIcon(TaskBarIcon):
     def __OnSetting(self, _evt):
         self.__OnShow(None)
         self.__main_frame.OnSetting(_evt)
+        return
+
+    def __OnCheckMinimzieToTaskBar(self, _evt: wx.CommandEvent):
+        menu_item: wx.MenuItem = self.__menu.FindItemById(_evt.GetId())
+        self.__setting['minimize_to_taskbar'] = menu_item.IsChecked()
+        self.__main_frame.ApplySetting()
         return
