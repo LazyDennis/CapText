@@ -255,7 +255,14 @@ class Mainframe(wx.Frame):
         return path
 
     def __OnExit(self, _evt):
-        wx.Exit()
+        if wx.MessageBox(u'是否退出程序？', 
+                         u'退出提示', 
+                         wx.YES_NO 
+                         | wx.YES_DEFAULT 
+                         | wx.CENTER 
+                         | wx.ICON_QUESTION, 
+                         self) == wx.ID_YES:
+            wx.Exit()
         return
 
     def __OnCapture(self, _evt):
@@ -481,6 +488,7 @@ class Mainframe(wx.Frame):
         else:
             if self.__taskbar_icon:
                 self.__taskbar_icon.Destroy()
+            self.__OnExit(None)
             _evt.Skip()
         return
 
