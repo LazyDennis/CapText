@@ -1,6 +1,5 @@
 import GlobalVars
 import os
-import json
 import pickle
 
 class Setting:
@@ -11,7 +10,7 @@ class Setting:
         if os.path.exists(_file):
             with open(_file, 'rb') as fp:
                 try:
-                    setting = json.loads(pickle.load(fp).decode('utf-8'))
+                    setting = pickle.load(fp)
                     for key, val in Setting.__default_setting.items():
                         if key not in setting:
                             setting[key] = val
@@ -24,8 +23,5 @@ class Setting:
     @staticmethod
     def SaveSettingToFile(_setting, _file):
         with open(_file, 'wb') as fp:
-            pickle.dump(json.dumps(_setting, 
-                                sort_keys=True,
-                                indent=4,
-                                separators=(',', ':')).encode('utf-8'), fp)
+            pickle.dump(_setting, fp)
         return
