@@ -5,8 +5,8 @@ import api
 TITLE = 'CapText'
 
 MAIN_VERSION = 1
-SUB_VERSION = 4
-MINOR_VERSION = 3
+SUB_VERSION = 5
+MINOR_VERSION = 0
 VERSION = str(MAIN_VERSION) + '.' + str(SUB_VERSION) + '.' + str(MINOR_VERSION)
 
 SETTING_FILE = 'Setting.conf'

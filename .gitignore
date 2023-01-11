@@ -2,5 +2,5 @@ __pycache__/
 api.py
 build/
 dist/
-buildexe.bat
+setting.conf
 CapText.spec

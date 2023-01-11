@@ -1,4 +1,21 @@
 from aip import AipOcr
+from threading import Thread
+
+class TextReconizeThread(Thread):
+
+    def __init__(self, _reconize_method, _args) -> None:
+        super().__init__()
+        self.__result_text = ''
+        self.__args = _args
+        self.__reconize_method = _reconize_method
+    
+    def run(self) -> None:
+        self.__result_text = self.__reconize_method(**self.__args)
+        return
+
+    def Result(self):
+        return self.__result_text
+
 
 def BaiduOcr(_img, _appid='', _apikey='', _secretkey='', _options=None) -> str:
     if _appid and _apikey and _secretkey:

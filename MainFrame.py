@@ -5,9 +5,9 @@ from GrabFrame import GrabFrame
 from SettingDialog import SettingDialog
 from io import BytesIO
 import Util
-from threading import Thread, Lock
 from ImageTuningPanel import ImageTuningPanel
 from Setting import Setting
+from TextReconize import TextReconizeThread
 
 import GlobalVars
 
@@ -22,8 +22,6 @@ class Mainframe(wx.Frame):
     __handler_map: dict = None
     __keymap: dict = None
     __reconize_type: int = GlobalVars.RECONIZE_TYPE['百度']
-    __text_reco: Thread = None
-    __status_bar_lock: Lock = Lock()
     __reconize_method: dict = None
     __setting: dict = {}
     __tuning_panel: ImageTuningPanel = None
@@ -70,8 +68,6 @@ class Mainframe(wx.Frame):
         return Setting.ReadSettingFromFile(self.__setting_file)
 
     def __InitUi(self):
-        # self.SetBackgroundStyle(wx.BG_STYLE_SYSTEM)
-        # self.SetForegroundColour('#FF0000')
         icon_bundle = wx.IconBundle()
         icon_bundle.AddIcon(
             wx.Icon(
@@ -96,11 +92,6 @@ class Mainframe(wx.Frame):
 
         self.SetSizer(self.__main_sizer)
         self.Center()
-        # color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
-        # self.__menu_bar.SetBackgroundColour(color)
-        # self.__toolbar.SetBackgroundColour(color)
-        # self.SetBackgroundColour(color)
-        # self.__status_bar.SetBackgroundColour(color)
 
     def __InitMenu(self):
         menu_bar = wx.MenuBar()
@@ -181,13 +172,6 @@ class Mainframe(wx.Frame):
     def __InitStatusBar(self):
         status_bar: wx.StatusBar = self.CreateStatusBar()
         status_bar.SetFieldsCount(2, [-1, 250])
-
-        # status_text = u'当前识别语言：'
-        # for key, val in GlobalVars.RECONIZE_LANGUAGE.items():
-        #     if val == self.__language_type:
-        #         status_text += key
-        #         break
-        # status_bar.SetStatusText(status_text, 1)
 
         return status_bar
 
@@ -392,18 +376,21 @@ class Mainframe(wx.Frame):
             self.__reconize_method['_args']['_options'][
                 'language_type'] = self.__setting['language_type']
 
-        self.__text_reco = TextReconizeThread(temp_img, self,
-                                              **self.__reconize_method)
-        self.__text_reco.start()
-        dots = '...'
-        while self.__text_reco.IsReconizing():
-            self.__status_bar_lock.acquire()
-            self.__status_bar.SetStatusText(u'识别中' + dots, 0)
-            self.__status_bar_lock.release()
-            dots += '.'
-            if len(dots) == 3:
-                dots = '.'
+        from wx.lib.agw.pyprogress import PyProgress
+        pro_dlg = PyProgress(self, title=u'识别中', agwStyle= wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME)
+        pro_dlg.CenterOnParent()
+        self.__reconize_method['_args'].update({'_img': temp_img.getvalue()})
+        text_reco = TextReconizeThread(**self.__reconize_method)
+        text_reco.start()
+        while text_reco.is_alive():
+            pro_dlg.UpdatePulse()
             wx.MilliSleep(100)
+        pro_dlg.Destroy()
+        self.Raise()
+        self.__result_text.ChangeValue(text_reco.Result())
+        self.__status_bar.SetStatusText(u'识别完成！', 0)
+        wx.TheClipboard.SetData(wx.TextDataObject(self.__result_text.GetValue()))
+
         return
 
     def ProcessGrabBitmap(self, _grab_bitmap: wx.Bitmap):
@@ -413,7 +400,6 @@ class Mainframe(wx.Frame):
         if _grab_bitmap:
             self.__raw_bitmap = wx.Bitmap(_grab_bitmap)
             self.__result_bitmap = self.__raw_bitmap
-            # self.__CopyBitmapToClipboard(self.__result_bitmap)
             self.SetCaptureBitmap(_grab_bitmap)
         self.__grab_frame.Close()
         return
@@ -447,10 +433,6 @@ class Mainframe(wx.Frame):
         _evt.Skip()
         return
 
-    # def __CopyBitmapToClipboard(self, _data : wx.Bitmap):
-    #     self.__clipboard.SetData(wx.ImageDataObject(_data.ConvertToImage()))
-    #     return
-
     def __OnGrabFrameHidden(self, _evt: wx.ShowEvent):
         if not _evt.IsShown() and self.__result_bitmap:
             self.__TextRecognize(self.__result_bitmap)
@@ -474,8 +456,6 @@ class Mainframe(wx.Frame):
         self.__status_bar.SetStatusText(_text, 0)
         return
 
-    def GetStatusLock(self):
-        return self.__status_bar_lock
 
     def __OnClose(self, _evt: wx.CloseEvent):
         if self.__setting['close_setting'] == GlobalVars.CLOSE_USER_SELECT:
@@ -485,7 +465,6 @@ class Mainframe(wx.Frame):
             if res == wx.ID_OK:
                 close_setting = close_dialog.GetSetting()
                 if not close_setting['allowed_prompt']:
-                    # self.__setting['allowed_close_prompt'] = False
                     self.__setting['close_setting'] = close_setting['close_setting']
                 setting = close_setting['close_setting']
             else:
@@ -513,7 +492,6 @@ class Mainframe(wx.Frame):
         return
 
     def ApplySetting(self):
-        # if self.__setting != GlobalVars.DEFAULT_SETTING:
         Setting.SaveSettingToFile(self.__setting, self.__setting_file)
         self.__SetStatusBarText()
         self.__SetHotkey()
@@ -579,38 +557,6 @@ class Mainframe(wx.Frame):
         if _evt:
             _evt.Skip()
         return
-
-
-class TextReconizeThread(Thread):
-
-    def __init__(self, _image_stream, _main_frame: Mainframe, _reconize_method,
-                 _args) -> None:
-        super().__init__()
-        self.__image_stream = _image_stream
-        self.__result_text = ''
-        self.__main_frame = _main_frame
-        self.__args = _args
-        self.__reconize_method = _reconize_method
-        self.__is_reconizing = False
-
-    def run(self) -> None:
-        self.__is_reconizing = True
-        self.__result_text = self.__reconize_method(
-            self.__image_stream.getvalue(), **self.__args)
-        self.__is_reconizing = False
-        self.__main_frame.SetText(str(self.__result_text))
-        lock = self.__main_frame.GetStatusLock()
-        if not lock.locked():
-            lock.acquire()
-            self.__main_frame.SetStatusText(u"  识别完成！")
-            lock.release()
-        return
-
-    def GetResult(self):
-        return self.__result_text
-
-    def IsReconizing(self):
-        return self.__is_reconizing
 
 
 class MainframeIcon(TaskBarIcon):
