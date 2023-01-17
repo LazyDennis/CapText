@@ -149,6 +149,8 @@ class Mainframe(wx.Frame):
                             shortcut_key = shortcut_key[:pos:] + shortcut_key[
                                 pos + 1::]
                             help_string += '(' + shortcut_key + ')'
+                        else:
+                            label = label_text
                         toolbar.AddTool(item['property']['id'], label,
                                         icon_bmp, wx.NullBitmap,
                                         wx.ITEM_NORMAL, help_string,
@@ -341,7 +343,10 @@ class Mainframe(wx.Frame):
         return
 
     def __OnAbout(self, _evt):
-
+        from AboutDialog import AboutDialog
+        about_dialog = AboutDialog(self)
+        about_dialog.ShowModal()
+        about_dialog.Destroy()
         return
 
     def __OnChar(self, _evt: wx.KeyEvent):

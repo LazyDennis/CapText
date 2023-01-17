@@ -1,7 +1,8 @@
+import wx
 import GlobalVars
+from PIL import Image as PilImage
 
-def GetIcon(_icon_path : str, _icon_size : tuple):
-    import wx
+def GetIcon(_icon_path : str, _icon_size : tuple) -> wx.Bitmap:
     from icons import ICONS
     from wx.lib.embeddedimage import PyEmbeddedImage
 
@@ -19,9 +20,6 @@ def GetMenuById(_id: int):
             if item['property']['id'] == _id:
                 return item
     return None
-
-import wx
-from PIL import Image as PilImage
 
 
 def PilImage2WxImage(_pil_image: PilImage.Image):

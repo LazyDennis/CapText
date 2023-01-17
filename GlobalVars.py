@@ -6,7 +6,7 @@ TITLE = 'CapText'
 
 MAIN_VERSION = 1
 SUB_VERSION = 5
-MINOR_VERSION = 0
+MINOR_VERSION = 1
 VERSION = str(MAIN_VERSION) + '.' + str(SUB_VERSION) + '.' + str(MINOR_VERSION)
 
 SETTING_FILE = 'Setting.conf'
@@ -228,7 +228,7 @@ MENUS = [
     },
     {
         'title': u'帮助(&H)',
-        'show_on_screen': False,
+        'show_on_screen': True,
         'menu_items':
         [  
             {
@@ -239,7 +239,7 @@ MENUS = [
                     'helpString': u'获取帮助',
                     'kind': wx.ITEM_NORMAL
                 },
-                'show_on_screen': True,
+                'show_on_screen': False,
                 'icon': u'帮助_help.png',
                 'handler': '__OnHelp',
                 'toolbartool': True,
@@ -256,7 +256,7 @@ MENUS = [
                 'show_on_screen': True,
                 'icon': u'信息_info.png',
                 'handler': '__OnAbout',
-                'toolbartool': False,
+                'toolbartool': True,
                 'menutool': True
             }
         ]
