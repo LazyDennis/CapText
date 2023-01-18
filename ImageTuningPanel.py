@@ -1,7 +1,6 @@
 import wx
 import GlobalVars
-import Util
-from PIL import ImageEnhance
+from ImageEnhance import ImageEnhance
 
 
 class ImageTuningPanel(wx.Dialog):
@@ -18,10 +17,10 @@ class ImageTuningPanel(wx.Dialog):
                          #  wx.CLIP_CHILDREN,
                          pos=_pos)
         self.slider_methods = {
-            'contrast': ImageEnhance.Contrast,
-            'color': ImageEnhance.Color,
-            'brightness': ImageEnhance.Brightness,
-            'sharpness': ImageEnhance.Sharpness
+            'contrast': ImageEnhance.Type.CONTRAST,
+            'color': ImageEnhance.Type.COLOR,
+            'brightness': ImageEnhance.Type.BRIGHTNESS,
+            'sharpness': ImageEnhance.Type.SHARPNESS
         }
         self.__tool: wx.ToolBarToolBase = _tool
         self.__tool.SetToggle(True)
@@ -78,19 +77,15 @@ class ImageTuningPanel(wx.Dialog):
         self.sliders[_slkey]['text_ctrl'].SetValue(str(value))
         raw_bitmap: wx.Bitmap = self.Parent.GetRawBitmap()
         if raw_bitmap:
-            pil_image = Util.WxImage2PilImage(raw_bitmap.ConvertToImage())
+            image_enhance = ImageEnhance(raw_bitmap.ConvertToImage())
             for sl_key, sl_val in self.sliders.items():
                 max_val = sl_val['slider'].GetMax()
                 min_val = sl_val['slider'].GetMin()
                 val = sl_val['slider'].GetValue()
-                mid_val = (max_val - min_val) / 2 if min_val >= 0 else 0
-                # self.sliders_settings[sl_key]['ratio']
-                ratio = 1 / (mid_val - min_val)
-                factor = (val - min_val) / ratio
-                pil_enhance = self.slider_methods[_slkey](pil_image)
-                pil_image = pil_enhance.enhance(factor)
+                image_enhance.Enhance(
+                    self.slider_methods[_slkey], val, max_val, min_val)            
             self.Parent.SetResultBitmap(
-                Util.PilImage2WxImage(pil_image).ConvertToBitmap())
+                image_enhance.GetWxImage().ConvertToBitmap())
             self.Parent.SetCaptureBitmap(self.Parent.GetResultBitmap())
         return
 
