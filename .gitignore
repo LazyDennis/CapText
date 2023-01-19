@@ -1,6 +1,4 @@
 __pycache__/
-api.py
-build/
-dist/
-setting.conf
-CapText.spec
+Source/api.py
+temp/
+Setting.conf
