@@ -442,13 +442,13 @@ class Mainframe(wx.Frame):
             self.__TextRecognize(self.__result_bitmap)
         return
 
-    def __OnKeyEsc(self, _evt):
-        self.__grab_frame.Hide()
-        if not self.__grab_frame.IsShown():
-            self.Show()
-            self.ShowTuningPanel()
-            self.__grab_frame.Close()
-        return
+    # def __OnKeyEsc(self, _evt):
+    #     self.__grab_frame.Hide()
+    #     if not self.__grab_frame.IsShown():
+    #         self.Show()
+    #         self.ShowTuningPanel()
+    #         self.__grab_frame.Close()
+    #     return
 
     def SetText(self, _text: str):
         self.__result_text.SetValue(_text)
@@ -485,7 +485,7 @@ class Mainframe(wx.Frame):
                 _evt.Skip()
             else:
                 _evt.Veto()
-            return
+        return
 
     def __OnIconize(self, _evt: wx.IconizeEvent):
         if self.__setting['minimize_to_taskbar']:
