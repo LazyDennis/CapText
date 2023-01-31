@@ -33,6 +33,7 @@ class Mainframe(wx.Frame):
             wx.GetDisplaySize().GetWidth() * 0.5,
             wx.GetDisplaySize().GetHeight() * 0.5)
         super().__init__(None, title=title, size=self.DEFAULT_WINDOW_SIZE)
+        self.ID_HOTKEY = wx.NewIdRef()
         self.__handler_map = {
             '__OnNew': self.__OnNew,
             '__OnOpenImage': self.__OnOpenImage,
@@ -47,12 +48,7 @@ class Mainframe(wx.Frame):
             '__OnAbout': self.__OnAbout
         }
 
-        self.__keymap = {
-            # wx.WXK_ESCAPE: {
-            #     'handler': self.__OnKeyEsc,
-            #     'id': wx.ID_ANY
-            # }
-        }
+        self.__keymap = {}
 
         self.__setting = self.__InitSetting()
 
@@ -319,9 +315,6 @@ class Mainframe(wx.Frame):
                 self, screen_bitmap, show_sum_rect.GetSize(),
                 show_sum_rect.GetPosition())
             self.__grab_frame.Bind(wx.EVT_SHOW, self.__OnGrabFrameHidden)
-            # TODO: 转移至GramFrame类中绑定
-            # self.__grab_frame.Bind(wx.EVT_CHAR, self.__OnChar)
-            # self.__grab_frame.Bind(wx.EVT_RIGHT_UP, self.__OnKeyEsc)
         return
 
     def __OnRecognize(self, _evt):
@@ -351,6 +344,7 @@ class Mainframe(wx.Frame):
 
     def __OnChar(self, _evt: wx.KeyEvent):
         key_code = _evt.GetKeyCode()
+        # print(self.__class__, '.__Onchar: ', key_code)
         if key_code in self.__keymap:
             _evt.SetId(self.__keymap[key_code]['id'])
             self.__keymap[key_code]['handler'](_evt)
@@ -438,17 +432,12 @@ class Mainframe(wx.Frame):
         return
 
     def __OnGrabFrameHidden(self, _evt: wx.ShowEvent):
-        if not _evt.IsShown() and self.__result_bitmap:
-            self.__TextRecognize(self.__result_bitmap)
+        if not _evt.IsShown():
+            if self.IsIconized():
+                self.Iconize(False)
+            if self.__result_bitmap:
+                self.__TextRecognize(self.__result_bitmap)
         return
-
-    # def __OnKeyEsc(self, _evt):
-    #     self.__grab_frame.Hide()
-    #     if not self.__grab_frame.IsShown():
-    #         self.Show()
-    #         self.ShowTuningPanel()
-    #         self.__grab_frame.Close()
-    #     return
 
     def SetText(self, _text: str):
         self.__result_text.SetValue(_text)
@@ -509,23 +498,20 @@ class Mainframe(wx.Frame):
         return
 
     def __SetHotkey(self):
+        self.Bind(wx.EVT_HOTKEY, self.OnCapture, id=self.ID_HOTKEY)
         if 'hotkey' in self.__setting and self.__setting['hotkey']:
-            self.RegisterHotKey(0, wx.MOD_CONTROL | wx.MOD_ALT,
+            self.RegisterHotKey(self.ID_HOTKEY, wx.MOD_CONTROL | wx.MOD_ALT,
                                 ord(self.__setting['hotkey']))
-            self.Bind(wx.EVT_HOTKEY, self.__OnHotkey, id=0)
+            # self.Bind(wx.EVT_HOTKEY, self.__OnHotkey, id=self.ID_HOTKEY)
         else:
-            self.UnregisterHotKey(0)
-            self.Unbind(wx.EVT_HOTKEY, id=0)
+            self.UnregisterHotKey(self.ID_HOTKEY)
+            # self.Unbind(wx.EVT_HOTKEY, id=self.ID_HOTKEY)
             pass
         return
 
-    def __OnHotkey(self, _evt):
-        self.OnCapture(None)
-        if self.IsIconized():
-            self.Iconize(False)
-
-        self.Raise()
-        return
+    # def __OnHotkey(self, _evt):
+    #     self.OnCapture(None)
+    #     return
 
     def __OnImageEnhance(self, _evt: wx.CommandEvent):
         tool: wx.ToolBarToolBase = self.__toolbar.FindById(_evt.GetId())
@@ -646,10 +632,10 @@ class MainframeIcon(TaskBarIcon):
     def __OnShow(self, _evt):
         self.__main_frame.Iconize(False)
         self.__main_frame.Show(True)
+        self.__main_frame.Raise()
         return
 
     def __OnCapture(self, _evt):
-        self.__OnShow(None)
         self.__main_frame.OnCapture(_evt)
         return
 

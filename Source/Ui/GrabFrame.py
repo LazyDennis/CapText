@@ -3,12 +3,11 @@ import wx
 class GrabFrame(wx.Frame):
 
     def __init__(self, parent, _screen_bitmap: wx.Bitmap, size: wx.Size, pos: wx.Position=(0, 0)):
-        wx.Frame.__init__(self,
-                          parent,
-                          wx.ID_ANY,
-                          pos=pos,
-                          size=size,
-                          style=wx.NO_BORDER | wx.STAY_ON_TOP | wx.WANTS_CHARS)
+        super().__init__(None,
+                         wx.ID_ANY,
+                         pos=pos,
+                         size=size,
+                         style=wx.NO_BORDER | wx.STAY_ON_TOP | wx.WANTS_CHARS)
         from Ui.MainFrame import Mainframe
         ###################################全局变量########################################
         self.__first_point: wx.Point = wx.Point(0, 0)  #记录截图的第一个点
@@ -31,6 +30,7 @@ class GrabFrame(wx.Frame):
         self.Bind(wx.EVT_MOTION, self.__OnMouseMove)
         self.Bind(wx.EVT_CHAR, self.__OnChar)
         self.Bind(wx.EVT_RIGHT_UP, self.__OnKeyEsc)
+        self.Raise()
         self.Show()
 
     def __OnPaint(self, _evt):
@@ -125,6 +125,7 @@ class GrabFrame(wx.Frame):
 
     def __OnChar(self, _evt: wx.KeyEvent):
         key_code = _evt.GetKeyCode()
+        # print(self.__class__, '.__Onchar: ', key_code)
         if key_code in self.__keymap:
             _evt.SetId(self.__keymap[key_code]['id'])
             self.__keymap[key_code]['handler'](_evt)
@@ -137,5 +138,6 @@ class GrabFrame(wx.Frame):
         if not self.IsShown():
             self.__parent_frame.Show()
             self.__parent_frame.ShowTuningPanel()
+            self.__parent_frame.SetResultBitmap(None)
             self.Close()
         return    
