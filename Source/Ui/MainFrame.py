@@ -1,6 +1,6 @@
-from wx.adv import TaskBarIcon
-import wx.adv
 import wx
+import wx.adv
+from wx.adv import TaskBarIcon
 from io import BytesIO
 from Ui.GrabFrame import GrabFrame
 from Ui.SettingDialog import SettingDialog
@@ -48,10 +48,10 @@ class Mainframe(wx.Frame):
         }
 
         self.__keymap = {
-            wx.WXK_ESCAPE: {
-                'handler': self.__OnKeyEsc,
-                'id': wx.ID_ANY
-            }
+            # wx.WXK_ESCAPE: {
+            #     'handler': self.__OnKeyEsc,
+            #     'id': wx.ID_ANY
+            # }
         }
 
         self.__setting = self.__InitSetting()
@@ -320,8 +320,8 @@ class Mainframe(wx.Frame):
                 show_sum_rect.GetPosition())
             self.__grab_frame.Bind(wx.EVT_SHOW, self.__OnGrabFrameHidden)
             # TODO: 转移至GramFrame类中绑定
-            self.__grab_frame.Bind(wx.EVT_CHAR, self.__OnChar)
-            self.__grab_frame.Bind(wx.EVT_RIGHT_UP, self.__OnKeyEsc)
+            # self.__grab_frame.Bind(wx.EVT_CHAR, self.__OnChar)
+            # self.__grab_frame.Bind(wx.EVT_RIGHT_UP, self.__OnKeyEsc)
         return
 
     def __OnRecognize(self, _evt):
@@ -400,8 +400,7 @@ class Mainframe(wx.Frame):
 
     def ProcessGrabBitmap(self, _grab_bitmap: wx.Bitmap):
         self.Show()
-        if self.__tuning_panel:
-            self.__tuning_panel.Show()
+        self.ShowTuningPanel()
         if _grab_bitmap:
             self.__raw_bitmap = wx.Bitmap(_grab_bitmap)
             self.__result_bitmap = self.__raw_bitmap
@@ -447,9 +446,7 @@ class Mainframe(wx.Frame):
         self.__grab_frame.Hide()
         if not self.__grab_frame.IsShown():
             self.Show()
-            if self.__tuning_panel:
-                self.__tuning_panel.Show(
-                    self.__tuning_panel.GetTool().IsToggled())
+            self.ShowTuningPanel()
             self.__grab_frame.Close()
         return
 
@@ -561,6 +558,12 @@ class Mainframe(wx.Frame):
                 wx.Point(frame_pos.x - tuning_size.GetWidth(), frame_pos.y))
         if _evt:
             _evt.Skip()
+        return
+
+    def ShowTuningPanel(self):
+        if self.__tuning_panel:
+                self.__tuning_panel.Show(
+                    self.__tuning_panel.GetTool().IsToggled())
         return
 
 

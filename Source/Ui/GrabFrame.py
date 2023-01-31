@@ -8,7 +8,7 @@ class GrabFrame(wx.Frame):
                           wx.ID_ANY,
                           pos=pos,
                           size=size,
-                          style=wx.NO_BORDER | wx.STAY_ON_TOP)
+                          style=wx.NO_BORDER | wx.STAY_ON_TOP | wx.WANTS_CHARS)
         from Ui.MainFrame import Mainframe
         ###################################全局变量########################################
         self.__first_point: wx.Point = wx.Point(0, 0)  #记录截图的第一个点
@@ -17,11 +17,20 @@ class GrabFrame(wx.Frame):
         self.__parent_frame: Mainframe = parent
         self.__screen_bitmap: wx.Bitmap = _screen_bitmap
 
+        self.__keymap = {
+            wx.WXK_ESCAPE: {
+                'handler': self.__OnKeyEsc,
+                'id': wx.ID_ANY
+            }
+        }
+
         self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
         self.Bind(wx.EVT_PAINT, self.__OnPaint)
         self.Bind(wx.EVT_LEFT_DOWN, self.__OnMouseLeftDown)
         self.Bind(wx.EVT_LEFT_UP, self.__OnMouseLeftUp)
         self.Bind(wx.EVT_MOTION, self.__OnMouseMove)
+        self.Bind(wx.EVT_CHAR, self.__OnChar)
+        self.Bind(wx.EVT_RIGHT_UP, self.__OnKeyEsc)
         self.Show()
 
     def __OnPaint(self, _evt):
@@ -113,4 +122,20 @@ class GrabFrame(wx.Frame):
     def __NewUpdate(self):
         self.RefreshRect(self.GetClientRect(), True)
         self.Update()
-        
+
+    def __OnChar(self, _evt: wx.KeyEvent):
+        key_code = _evt.GetKeyCode()
+        if key_code in self.__keymap:
+            _evt.SetId(self.__keymap[key_code]['id'])
+            self.__keymap[key_code]['handler'](_evt)
+        else:
+            _evt.Skip()
+        return
+
+    def __OnKeyEsc(self, _evt):
+        self.Hide()
+        if not self.IsShown():
+            self.__parent_frame.Show()
+            self.__parent_frame.ShowTuningPanel()
+            self.Close()
+        return    
