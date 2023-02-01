@@ -393,6 +393,7 @@ class Mainframe(wx.Frame):
         return
 
     def ProcessGrabBitmap(self, _grab_bitmap: wx.Bitmap):
+        self.Iconize(False)
         self.Show()
         self.ShowTuningPanel()
         if _grab_bitmap:
@@ -433,8 +434,6 @@ class Mainframe(wx.Frame):
 
     def __OnGrabFrameHidden(self, _evt: wx.ShowEvent):
         if not _evt.IsShown():
-            if self.IsIconized():
-                self.Iconize(False)
             if self.__result_bitmap:
                 self.__TextRecognize(self.__result_bitmap)
         return
