@@ -1,5 +1,7 @@
 import wx
 
+from Ui.CaptureToolFrame import CaptureToolFrame
+
 class GrabFrame(wx.Frame):
 
     def __init__(self, parent, _screen_bitmap: wx.Bitmap, size: wx.Size, pos: wx.Position=(0, 0)):
@@ -18,7 +20,7 @@ class GrabFrame(wx.Frame):
 
         self.__keymap = {
             wx.WXK_ESCAPE: {
-                'handler': self.__OnKeyEsc,
+                'handler': self.Exit,
                 'id': wx.ID_ANY
             }
         }
@@ -29,7 +31,7 @@ class GrabFrame(wx.Frame):
         self.Bind(wx.EVT_LEFT_UP, self.__OnMouseLeftUp)
         self.Bind(wx.EVT_MOTION, self.__OnMouseMove)
         self.Bind(wx.EVT_CHAR, self.__OnChar)
-        self.Bind(wx.EVT_RIGHT_UP, self.__OnKeyEsc)
+        self.Bind(wx.EVT_RIGHT_UP, self.Exit)
         self.Raise()
         self.Show()
 
@@ -37,7 +39,7 @@ class GrabFrame(wx.Frame):
         dc = wx.GCDC(wx.BufferedPaintDC(self))
         self.__PaintUpdate(dc)
 
-    def __PaintUpdate(self, _dc):
+    def __PaintUpdate(self, _dc: wx.GCDC):
         rect: wx.Rect = self.GetClientRect()
         color = wx.Colour(0, 0, 0, 120)
 
@@ -58,7 +60,7 @@ class GrabFrame(wx.Frame):
         _dc.DrawRectangle(minX, maxY, rect.width - minX, rect.height - maxY)
         _dc.DrawRectangle(0, minY, minX, rect.height - minY)
 
-        if (self.__on_capture == True):
+        if self.__on_capture:
 
             #画出截图区域的边框
             _dc.SetPen(wx.Pen(wx.Colour(255, 0, 0)))
@@ -81,41 +83,53 @@ class GrabFrame(wx.Frame):
             w, h = 140, 43
             s = u'区域大小：' + str(maxX - minX) + '*' + str(maxY - minY)
             s += u'\n鼠标位置：（' + str(self.__last_point.x) + ',' + str(
-                self.__last_point.y) + ')'
+                self.__last_point.y) + '）'
             _dc.DrawRectangle(minX, minY - h - 5 if minY - 5 > h else minY + 5,
                              w, h)
             _dc.SetTextForeground(wx.Colour(255, 255, 255))
             _dc.DrawText(s, minX + 5,
                         (minY - h - 5 if minY - 5 > h else minY + 5) + 5)
 
-    def __OnMouseLeftDown(self, _evt):
+    def __OnMouseLeftDown(self, _evt: wx.MouseEvent):
         # self.__parent_frame.Hide()
-        self.__on_capture = True
-        self.__first_point = _evt.GetPosition()
-        self.__last_point = _evt.GetPosition()
-
-    def __OnMouseLeftUp(self, _evt):
-        if (self.__on_capture):
+        self.__on_capture = not self.__on_capture
+        print('on_capture:', self.__on_capture)
+        if self.__on_capture:
+            self.__first_point = _evt.GetPosition()
             self.__last_point = _evt.GetPosition()
-            if (self.__first_point.x == self.__last_point.x) and \
-                (self.__first_point.y == self.__last_point.y):
-                wx.MessageBox(u"区域设置不正确", "Error", wx.OK | wx.ICON_ERROR, self)
-                self.__on_capture = False
-                self.__first_point = wx.Point(0, 0)  #记录截图的第一个点
-                self.__last_point = wx.Point(0, 0)  #记录截图的最后一个点
-                self.__parent_frame.ProcessGrabBitmap(None)
+        else:
+            self.__tool_frame = CaptureToolFrame(self, _evt.GetPosition())
+            pos: wx.Point = self.__tool_frame.GetPosition()
+            size: wx.Size = self.__tool_frame.GetSize()
+            self.__tool_frame.SetPosition(wx.Point(pos.x - size.width, pos.y))
+        return
+    
+    def __OnMouseLeftUp(self, _evt: wx.MouseEvent):
+        
+        
+        return
+    
+    def GetCapture(self, _last_point):
+        self.__last_point = _last_point
+        if (self.__first_point.x == self.__last_point.x) and \
+            (self.__first_point.y == self.__last_point.y):
+            wx.MessageBox(u"区域设置不正确", "Error", wx.OK | wx.ICON_ERROR, self)
+            self.__on_capture = False
+            self.__first_point = wx.Point(0, 0)  #记录截图的第一个点
+            self.__last_point = wx.Point(0, 0)  #记录截图的最后一个点
+            self.__parent_frame.ProcessGrabBitmap(None)
 
-            else:
-                self.__parent_frame.ProcessGrabBitmap(
-                    self.__screen_bitmap.GetSubBitmap(
-                        wx.Rect(
-                            min(self.__first_point.x, self.__last_point.x),
-                            min(self.__first_point.y, self.__last_point.y),
-                            abs(self.__first_point.x - self.__last_point.x),
-                            abs(self.__first_point.y - self.__last_point.y))))
+        else:
+            self.__parent_frame.ProcessGrabBitmap(
+                self.__screen_bitmap.GetSubBitmap(
+                    wx.Rect(
+                        min(self.__first_point.x, self.__last_point.x),
+                        min(self.__first_point.y, self.__last_point.y),
+                        abs(self.__first_point.x - self.__last_point.x),
+                        abs(self.__first_point.y - self.__last_point.y))))
 
     def __OnMouseMove(self, _evt):
-        if (self.__on_capture):
+        if self.__on_capture:
             self.__last_point = _evt.GetPosition()
             self.__NewUpdate()
 
@@ -133,7 +147,7 @@ class GrabFrame(wx.Frame):
             _evt.Skip()
         return
 
-    def __OnKeyEsc(self, _evt):
+    def Exit(self, _evt=None):
         self.Hide()
         if not self.IsShown():
             self.__parent_frame.Show()
