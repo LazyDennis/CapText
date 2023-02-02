@@ -89,24 +89,31 @@ class GrabFrame(wx.Frame):
             _dc.SetTextForeground(wx.Colour(255, 255, 255))
             _dc.DrawText(s, minX + 5,
                         (minY - h - 5 if minY - 5 > h else minY + 5) + 5)
+            return
 
     def __OnMouseLeftDown(self, _evt: wx.MouseEvent):
         # self.__parent_frame.Hide()
-        self.__on_capture = not self.__on_capture
-        print('on_capture:', self.__on_capture)
-        if self.__on_capture:
-            self.__first_point = _evt.GetPosition()
-            self.__last_point = _evt.GetPosition()
-        else:
-            self.__tool_frame = CaptureToolFrame(self, _evt.GetPosition())
-            pos: wx.Point = self.__tool_frame.GetPosition()
-            size: wx.Size = self.__tool_frame.GetSize()
-            self.__tool_frame.SetPosition(wx.Point(pos.x - size.width, pos.y))
+        # self.__on_capture = not self.__on_capture
+        # print('on_capture:', self.__on_capture)
+        # if self.__on_capture:
+        self.__on_capture = True
+        self.__first_point = _evt.GetPosition()
+        self.__last_point = _evt.GetPosition()
+        # else:
+            # self.__tool_frame = CaptureToolFrame(self, _evt.GetPosition())
+            # pos: wx.Point = self.__tool_frame.GetPosition()
+            # size: wx.Size = self.__tool_frame.GetSize()
+            # self.__tool_frame.SetPosition(wx.Point(pos.x - size.width, pos.y))
+            # pass
         return
     
     def __OnMouseLeftUp(self, _evt: wx.MouseEvent):
-        
-        
+        self.__on_capture = False
+        self.__tool_frame = CaptureToolFrame(self, _evt.GetPosition())
+        pos: wx.Point = self.__tool_frame.GetPosition()
+        size: wx.Size = self.__tool_frame.GetSize()
+        self.__tool_frame.SetPosition(wx.Point(pos.x - size.width, pos.y + 5))
+    
         return
     
     def GetCapture(self, _last_point):
