@@ -50,7 +50,6 @@ class CaptureToolFrame(wx.Frame):
     
     def __InitUi(self):
         BORDER = 5
-        # self.SetBackgroundColour(wx.Colour(255, 255, 255))
         self.__main_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.__buttons: dict[str, wx.BitmapButton] = {}
         for button_id, button_setting in self.TOOL_BUTTON_SETTING.items():
@@ -66,29 +65,9 @@ class CaptureToolFrame(wx.Frame):
                 bitmap_button.SetLabel(button_setting['help_text'])
                 bitmap_button.SetHelpText(button_setting['help_text'])
                 bitmap_button.SetBitmapCurrent(bitmap_normal)
-                self.__main_sizer.Add(bitmap_button, 0, wx.TOP | wx.BOTTOM, BORDER)
+                self.__main_sizer.Add(bitmap_button, 0, wx.ALL, BORDER)
                 self.__buttons[button_id] = bitmap_button
                 bitmap_button.Bind(wx.EVT_BUTTON, button_setting['handler'], id=button_id)
-        self.SetBackgroundColour(wx.Colour(255, 255, 255))
-        # self.__main_sizer = wx.BoxSizer(wx.VERTICAL)
-        # self.__toolbar: wx.ToolBar = self.CreateToolBar(wx.TB_FLAT | wx.TB_HORIZONTAL
-        #                                          | wx.TB_TEXT)
-        # for tool_id, button_setting in self.TOOL_BUTTON_SETTING.items():
-        #     if 'show_on_screen' in button_setting and button_setting['show_on_screen']:
-        #         bmp_normal = Util.GetIcon(button_setting['icon_normal'], 
-        #                                     GlobalVars.ICON_SETTING['toolbar_icon'])
-        #         bmp_disable = Util.GetIcon(button_setting['icon_disable'], 
-        #                                     GlobalVars.ICON_SETTING['toolbar_icon'])
-        #         self.__toolbar.AddTool(
-        #             toolId=tool_id, 
-        #             label=button_setting['help_text'], 
-        #             bitmap=bmp_normal,
-        #             # bmp_disable,
-        #             shortHelp=button_setting['help_text'],
-        #             kind=wx.ITEM_NORMAL
-        #             # button_setting['help_text']
-        #         )
-        # self.__toolbar.Realize()
         
         self.SetSizerAndFit(self.__main_sizer)
         
@@ -96,7 +75,7 @@ class CaptureToolFrame(wx.Frame):
                 
     def __OnOk(self, _evt: wx.CommandEvent):
         self.Hide()
-        self.Parent.GetCapture(self.__last_point)
+        self.Parent.GetCapture()
         return
     
     def __OnCancel(self, _evt: wx.CommandEvent):

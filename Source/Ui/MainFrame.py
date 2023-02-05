@@ -298,9 +298,10 @@ class Mainframe(wx.Frame):
             show_sum_rect, cap_sum_rect = GetDisplayRects(display)
 
         '''For debugging'''
-        # display_pos_x_min = 0
-        # display_pos_y_min = 0
-        # display_sum_width, display_sum_heigth = wx.GetDisplaySize()
+        display_pos_x_min = 0
+        display_pos_y_min = 0
+        display_sum_width, display_sum_heigth = wx.GetDisplaySize()
+        show_sum_rect = wx.Rect(display_pos_x_min, display_pos_x_min, display_sum_width, display_sum_heigth)
         '''For debugging'''
 
         if self.__tuning_panel:
