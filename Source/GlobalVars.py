@@ -365,3 +365,32 @@ DEFAULT_SETTING = {
             'close_setting': CLOSE_USER_SELECT, # True for close to taskbar, False for close to exit
             'minimize_to_taskbar': False
 }
+
+from enum import Enum, unique
+
+@unique
+class CursorSizeType(Enum):
+    DEFAULT = 10
+    MOVE = 11
+    NWSE = 12
+    NESW = 13
+    WE = 14
+    NS = 15
+
+@unique
+class RectanglePositon(Enum):
+    EXTERNAL = 20
+    INTERNAL = 21
+    LEFT = 22
+    RIGHT = 23
+    TOP = 24
+    BOTTOM = 25
+    TOPLEFT = 26
+    TOPRIGHT = 27
+    BOTTOMLEFT = 28
+    BOTTOMRIGHT = 29
+
+# POINT_COMPARE_RANGE = 10    #x、y方向上的范围
+# POINT_COMPARE_X = 0x1   #只比较X坐标
+# POINT_COMPARE_Y = 0X2   #只比较y坐标
+# POINT_COMPARE_XY = POINT_COMPARE_X | POINT_COMPARE_Y #X、y都比较

@@ -49,7 +49,7 @@ class Mainframe(wx.Frame):
         }
 
         self.__keymap = {}
-
+        self.__grab_frame = None
         self.__setting = self.__InitSetting()
 
         self.__InitUi()
@@ -255,6 +255,9 @@ class Mainframe(wx.Frame):
         return do_exit
 
     def OnCapture(self, _evt):
+        if self.__grab_frame and self.__grab_frame.IsActive():
+            return #防止触发多次截图
+
         self.__OnNew(None)
 
         def GetDisplayRects(display: wx.Display):
@@ -298,10 +301,10 @@ class Mainframe(wx.Frame):
             show_sum_rect, cap_sum_rect = GetDisplayRects(display)
 
         '''For debugging'''
-        display_pos_x_min = 0
-        display_pos_y_min = 0
-        display_sum_width, display_sum_heigth = wx.GetDisplaySize()
-        show_sum_rect = wx.Rect(display_pos_x_min, display_pos_x_min, display_sum_width, display_sum_heigth)
+        # display_pos_x_min = 0
+        # display_pos_y_min = 0
+        # display_sum_width, display_sum_heigth = wx.GetDisplaySize()
+        # show_sum_rect = wx.Rect(display_pos_x_min, display_pos_y_min, display_sum_width, display_sum_heigth)
         '''For debugging'''
 
         if self.__tuning_panel:

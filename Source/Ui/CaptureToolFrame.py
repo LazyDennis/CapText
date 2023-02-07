@@ -7,13 +7,13 @@ class CaptureToolFrame(wx.Frame):
     ID_CANCEL = 301
     BUTTON_SIZE = (30, 30)
 
-    def __init__(self, _parent, _pos):
+    def __init__(self, _parent, _pos=wx.DefaultPosition):
         super().__init__(
             _parent, 
             pos=_pos, 
             style=wx.NO_BORDER | wx.STAY_ON_TOP | wx.WANTS_CHARS
         )
-        self.__last_point = _pos
+        # self.__last_point = _pos
         self.TOOL_BUTTON_SETTING = {
             self.ID_OK: 
             {
@@ -37,7 +37,11 @@ class CaptureToolFrame(wx.Frame):
         self.__keymap = {
             wx.WXK_ESCAPE: {
                 'handler': self.__OnCancel,
-                'id': wx.ID_ANY
+                'id': self.ID_CANCEL
+            },
+            wx.WXK_RETURN: {
+                'handler': self.__OnOk,
+                'id': self.ID_OK
             }
         }
         self.__InitUi()
