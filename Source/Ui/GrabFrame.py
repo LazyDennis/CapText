@@ -1,7 +1,7 @@
 import wx
 
 from Ui.CaptureToolFrame import CaptureToolFrame
-from GlobalVars import CursorSizeType as CurT, RectanglePositon as RectPos
+from GlobalVars import RectanglePositon as RectPos
 
 
 class GrabFrame(wx.Frame):
@@ -25,6 +25,7 @@ class GrabFrame(wx.Frame):
         
         self.__rect_pos = RectPos.EXTERNAL
         self.__on_rect_adjust = False #截图区域大小调整中
+        self.__tool_frame = None
         
         self.__keymap = {
             wx.WXK_ESCAPE: {
@@ -280,15 +281,17 @@ class GrabFrame(wx.Frame):
         self.__rect_is_drawn = True
         self.__on_rect_adjust = False
         
-        self.__tool_frame = CaptureToolFrame(self)
+        if self.__tool_frame is None:
+            self.__tool_frame = CaptureToolFrame(self)
         self.__SetToolFramePosition()
         return
     
     def __SetToolFramePosition(self):
         # pos: wx.Point = self.__tool_frame.GetPosition() #TODO: 调整位置
         tool_frame_size: wx.Size = self.__tool_frame.GetSize()
+        # print(tool_frame_size, self.__capture_rect.Get())
         tool_frame_pos = wx.Point()
-        if (self.__screen_bitmap.GetHeight() > 
+        if (self.GetSize().GetHeight() > 
             self.__capture_rect.GetBottom() + tool_frame_size.GetHeight() + 5):
             tool_frame_pos.x = self.__capture_rect.GetRight() - tool_frame_size.GetWidth()
             tool_frame_pos.y = self.__capture_rect.GetBottom() + 5
@@ -296,7 +299,7 @@ class GrabFrame(wx.Frame):
               self.__capture_rect.GetTop() - tool_frame_size.GetHeight() - 5):
             tool_frame_pos.x = self.__capture_rect.GetRight() - tool_frame_size.GetWidth()
             tool_frame_pos.y = self.__capture_rect.GetTop() - tool_frame_size.GetHeight() - 5
-        elif (self.__screen_bitmap.GetWidth() >
+        elif (self.GetSize().GetWidth() >
               self.__capture_rect.GetRight() + tool_frame_size.GetWidth() + 5):
             tool_frame_pos.x = self.__capture_rect.GetRight() + 5
             tool_frame_pos.y = self.__capture_rect.GetBottom() - tool_frame_size.GetHeight() - 5
@@ -307,15 +310,20 @@ class GrabFrame(wx.Frame):
         else:
             tool_frame_pos.x = self.__capture_rect.GetRight() - tool_frame_size.GetWidth() - 5
             tool_frame_pos.y = self.__capture_rect.GetBottom() - tool_frame_size.GetHeight() - 5
-
+        
+        tool_frame_pos.x += self.GetPosition().x
+        tool_frame_pos.y += self.GetPosition().y
+        
         self.__tool_frame.SetPosition(tool_frame_pos)
-    
+        self.__tool_frame.Raise()
+        # print(self.__tool_frame.GetPosition(), self.GetPosition())
+        
         return
     
     def __OnMouseDoubleClick(self, _evt: wx.MouseEvent):
         if not self.__capture_rect.IsEmpty():
             self.GetCapture()
-            self.Close()
+            # self.Close()
         return
     
     def GetCapture(self):

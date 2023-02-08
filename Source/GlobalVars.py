@@ -368,14 +368,14 @@ DEFAULT_SETTING = {
 
 from enum import Enum, unique
 
-@unique
-class CursorSizeType(Enum):
-    DEFAULT = 10
-    MOVE = 11
-    NWSE = 12
-    NESW = 13
-    WE = 14
-    NS = 15
+# @unique
+# class CursorSizeType(Enum):
+#     DEFAULT = 10
+#     MOVE = 11
+#     NWSE = 12
+#     NESW = 13
+#     WE = 14
+#     NS = 15
 
 @unique
 class RectanglePositon(Enum):
